@@ -4,8 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GUI extends JFrame implements ActionListener {
-    private final int MAX_CHOICES = 4;
-    private final int MARGIN = 10;
+
 
     private final JLabel faceLabel;
     private final JLabel scoreLabel;
@@ -17,9 +16,14 @@ public class GUI extends JFrame implements ActionListener {
     private final Memoriser studentData;
     private int studentIndex;
 
-    public GUI(int width, int height, Memoriser mem) {
-        super("test");
+    public GUI(Config settings, Memoriser mem) {
+        super("Namonic");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        int MARGIN = settings.getInt("CHOICE_MARGIN");
+        int MAX_CHOICES = settings.getInt("MAX_CHOICES");
+        int WIDTH = settings.getInt("WINDOW_WIDTH");
+        int HEIGHT = settings.getInt("WINDOW_HEIGHT");
 
         // set up widgets and panels
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -86,7 +90,7 @@ public class GUI extends JFrame implements ActionListener {
         }
         eastPanel.add(filterPanel, BorderLayout.CENTER);
 
-        setSize(new Dimension(width, height));
+        setSize(new Dimension(WIDTH, HEIGHT));
 
         // load student data
         studentData = mem;

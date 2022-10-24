@@ -1,24 +1,24 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 
 public class ResourceManager {
 
-    // size, position and spacing of the pictures in the grid imported from SIMS
-    private static final int topMargin = 3;
-    private static final int leftMargin = 3;
-    private static final int columns = 6;
-    private static final int rows = 4;
-    private static final int hSpacing = 14;
-    private static final int vSpacing = 15;
-    private static final int width = 147;
-    private static final int height = 140;
-
-    public static ArrayList<ImageIcon> loadImages(String filename) {
+    public static ArrayList<ImageIcon> loadImages(Config settings) {
+        String filename =
+                settings.getString("GALLERY_FILE_PREFIX")
+                        + "0" + settings.getString("GALLERY_FILE_EXTENSION");
+        // size, position and spacing of the pictures in the grid imported from SIMS
+        int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
+        int leftMargin = settings.getInt("GALLERY_LEFT_MARGIN");
+        int columns = settings.getInt("GALLERY_COLUMNS");
+        int rows = settings.getInt("GALLERY_ROWS");
+        int hSpacing = settings.getInt("GALLERY_H_SPACING");
+        int vSpacing = settings.getInt("GALLERY_V_SPACING");
+        int width = settings.getInt("GALLERY_IMAGE_WIDTH");
+        int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
         ArrayList<ImageIcon> images = new ArrayList<>();
         try{
             BufferedImage galleryImage = ImageIO.read(new File(filename));
@@ -34,7 +34,7 @@ public class ResourceManager {
             }
         }
         catch(Exception e){
-            e.printStackTrace();
+            ErrorHandler.ModalMessage(e.getLocalizedMessage() + "  " + filename);
         }
         return images;
 
