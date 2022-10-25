@@ -7,36 +7,39 @@ import java.util.ArrayList;
 public class ResourceManager {
 
     public static ArrayList<ImageIcon> loadImages(Config settings) {
-        String filename =
-                settings.getString("GALLERY_FILE_PREFIX")
-                        + "0" + settings.getString("GALLERY_FILE_EXTENSION");
         // size, position and spacing of the pictures in the grid imported from SIMS
         int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
         int leftMargin = settings.getInt("GALLERY_LEFT_MARGIN");
-        int columns = settings.getInt("GALLERY_COLUMNS");
-        int rows = settings.getInt("GALLERY_ROWS");
         int hSpacing = settings.getInt("GALLERY_H_SPACING");
         int vSpacing = settings.getInt("GALLERY_V_SPACING");
         int width = settings.getInt("GALLERY_IMAGE_WIDTH");
         int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
+
+        // look for all image gallery files that match the wildcard expression
+        String[] galleryFiles = FileHandler.getMatchingFiles(
+                settings.getString("GALLERY_FOLDER"),
+                settings.getString("GALLERY_FILE_WILDCARD"));
+        if (galleryFiles.length == 0) {
+            ErrorHandler.ModalMessage("No gallery files found! Check cfg file");
+        }
         ArrayList<ImageIcon> images = new ArrayList<>();
-        try{
-            BufferedImage galleryImage = ImageIO.read(new File(filename));
-            for (int row=0; row<rows; row++) {
-                for (int col=0; col<columns; col++) {
-                    ImageIcon icon = new ImageIcon(galleryImage.getSubimage(
-                            leftMargin + col * (width + hSpacing),
-                            topMargin + row * (height + vSpacing),
-                            width,
-                            height));
-                    images.add(icon);
+        for(String filename: galleryFiles) {
+            try{
+                BufferedImage galleryImage = ImageIO.read(new File(filename));
+                int y = topMargin;
+                while (y+height < galleryImage.getHeight()) {
+                    int x = leftMargin;
+                    while (x + width < galleryImage.getWidth()) {
+                        ImageIcon icon = new ImageIcon(galleryImage.getSubimage(x, y, width, height));
+                        images.add(icon);
+                        x = x + width + hSpacing;
+                    }
+                    y = y + height + vSpacing;
                 }
+            } catch(Exception e){
+                ErrorHandler.ModalMessage(e.getLocalizedMessage() + "  " + filename);
             }
         }
-        catch(Exception e){
-            ErrorHandler.ModalMessage(e.getLocalizedMessage() + "  " + filename);
-        }
         return images;
-
     }
 }

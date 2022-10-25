@@ -1,7 +1,6 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
@@ -9,7 +8,7 @@ import java.util.ArrayList;
 public class FileHandler {
 
     public static ArrayList<String> readWholeFile(String filename) {
-        ArrayList<String> results = new ArrayList();
+        ArrayList<String> results = new ArrayList<>();
         try {
             FileReader fr = new FileReader(filename);
             BufferedReader br = new BufferedReader(fr);
@@ -60,6 +59,55 @@ public class FileHandler {
     public static boolean fileExists(String fileName) {
         File f = new File(fileName);
         return (f.exists());
+    }
+
+    public static String[] getAllFiles(String folder) {
+        //create a File object from the folder name
+        File directoryPath = new File(folder);
+        //List of all files and directories
+        return directoryPath.list();
+    }
+
+    public static String[] getMatchingFiles(String folder, String wildcardExpression) {
+        // allows wildcard expressions taking any of these common forms:
+        //  foo*.*
+        //  *foo.*
+        //  foo.*
+        //  foo*.bar
+        //  *foo.bar
+        //  foo.bar
+        ArrayList<String> results = new ArrayList<>();
+        String[] fileParts = wildcardExpression.split("\\.");
+        String matchName = fileParts[0];
+        String matchExtension;
+        if (fileParts.length>1) {
+            matchExtension = fileParts[1];
+        } else {
+            matchExtension = "";
+        }
+        // loop through all files in the folder and keep the ones that match
+        for (String f: getAllFiles(folder)) {
+            String[] fParts = f.split("\\.");
+            // check the extension matches 1st
+            if (matchExtension.equals("") || matchExtension.equals("*") ||
+                    (fParts.length>1 && fParts[1].equals(matchExtension))) {
+                // now check the filename matches
+                if (matchName.startsWith("*")) {
+                    String nonWildPart = matchName.substring(1);  // all but the initial *
+                    if (fParts[0].endsWith(nonWildPart)) {
+                        results.add(folder+"\\"+f);
+                        //System.out.println("starting match " + f);
+                    }
+                } else if (matchName.endsWith("*")) {
+                    String nonWildPart = matchName.substring(0, matchName.length()-1);  // all but trailing *
+                    if (fParts[0].startsWith(nonWildPart)) {
+                        results.add(folder+"\\"+f);
+                        //System.out.println("ending match " + f);
+                    }
+                }
+            }
+        }
+        return results.toArray(new String[results.size()]);
     }
 
     // save a JPanel as a PNG file (overwrites if it already exists)

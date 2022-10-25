@@ -51,6 +51,7 @@ public class GUI extends JFrame implements ActionListener {
         for (int i=0; i<MAX_CHOICES; i++) {
             choices[i] = new JButton("choice "+(i+1));
             choices[i].setAlignmentX(Component.CENTER_ALIGNMENT);
+            choices[i].addActionListener(this);
             choicePanel.add(choices[i]);
             choicePanel.add(Box.createRigidArea(new Dimension(MARGIN, MARGIN/2)));
         }
@@ -118,7 +119,7 @@ public class GUI extends JFrame implements ActionListener {
 
 
         // unused test functionality to advance to the next face
-        if (e.getActionCommand().equals("next")) {
+        if (e.getActionCommand().equals("choice 1")) {
             studentIndex = (studentIndex+1)%studentData.getTotalStudents();
             faceLabel.setIcon(studentData.getStudent(studentIndex).getFace());
             faceLabel.setText(Integer.toString(studentIndex));
