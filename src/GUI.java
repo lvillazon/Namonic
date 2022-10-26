@@ -13,8 +13,10 @@ public class GUI extends JFrame implements ActionListener {
     private final JCheckBox[] filters;
     private final JButton filterAllButton;
     private final JButton filterClearButton;
-    private final Memoriser studentData;
-    private int studentIndex;
+    private final JLabel nameLabel;
+    private final JLabel catLabel;
+    private final Memoriser itemData;
+    private int itemIndex;
 
     public GUI(Config settings, Memoriser mem) {
         super("Namonic");
@@ -55,6 +57,11 @@ public class GUI extends JFrame implements ActionListener {
             choicePanel.add(choices[i]);
             choicePanel.add(Box.createRigidArea(new Dimension(MARGIN, MARGIN/2)));
         }
+        // DEBUG also add name and category labels
+        nameLabel = new JLabel("name");
+        catLabel = new JLabel("category");
+        choicePanel.add(nameLabel);
+        choicePanel.add(catLabel);
         westPanel.add(choicePanel, BorderLayout.CENTER);
 
         // score
@@ -94,9 +101,9 @@ public class GUI extends JFrame implements ActionListener {
         setSize(new Dimension(WIDTH, HEIGHT));
 
         // load student data
-        studentData = mem;
-        studentIndex = 0;
-        faceLabel.setIcon(studentData.getStudent(studentIndex).getFace());
+        itemData = mem;
+        itemIndex = 0;
+        faceLabel.setIcon(itemData.getItem(itemIndex).getPicture());
 
         faceLabel.setVisible(true);
         repaint();
@@ -120,9 +127,10 @@ public class GUI extends JFrame implements ActionListener {
 
         // unused test functionality to advance to the next face
         if (e.getActionCommand().equals("choice 1")) {
-            studentIndex = (studentIndex+1)%studentData.getTotalStudents();
-            faceLabel.setIcon(studentData.getStudent(studentIndex).getFace());
-            faceLabel.setText(Integer.toString(studentIndex));
+            itemIndex = (itemIndex+1)%itemData.getTotalItems();
+            faceLabel.setIcon(itemData.getItem(itemIndex).getPicture());
+            nameLabel.setText(itemData.getItem(itemIndex).getName());
+            catLabel.setText(itemData.getItem(itemIndex).getCategory());
             repaint();
         }
     }

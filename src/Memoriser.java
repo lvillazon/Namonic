@@ -2,21 +2,28 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public class Memoriser {
-    private ArrayList<Student> students;
+    private ArrayList<Item> items;
 
     public Memoriser(Config settings) {
-        ArrayList<ImageIcon> faces = ResourceManager.loadImages(settings);
-        students = new ArrayList<>();
-        for (int i=0; i<faces.size(); i++) {
-            students.add(new Student(faces.get(i)));
+        ArrayList<ImageIcon> pictures = ResourceManager.loadImages(settings);
+        items = ResourceManager.loadItemData(settings);
+        // assign the pictures to the items - should be a 1:1 correspondence
+        if (items.size()==pictures.size()) {
+            int index = 0;
+            for (Item i: items) {
+                i.setPicture(pictures.get(index));
+                index++;
+            }
+        } else {
+            ErrorHandler.ModalMessage("image count doesn't match name count:" + pictures.size() + " vs " + items.size());
         }
     }
 
-    public Student getStudent(int i) {
-        return students.get(i);
+    public Item getItem(int i) {
+        return items.get(i);
     }
 
-    public int getTotalStudents() {
-        return students.size();
+    public int getTotalItems() {
+        return items.size();
     }
 }

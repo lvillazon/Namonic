@@ -6,6 +6,45 @@ import java.util.ArrayList;
 
 public class ResourceManager {
 
+    public static ArrayList<Item> loadItemData(Config settings) {
+        ArrayList<String> rawData = FileHandler.readWholeFile(settings.getString("NAME_FILE"));
+        ArrayList<Item> results = new ArrayList<>();
+        int i = settings.getInt("NAME_FILE_HEADER_LINES");  // skip any header lines in the file
+        String category = "none";
+        String[] validCategories = settings.getString("NAME_CATEGORIES").split(",");
+        while (i<rawData.size()) {
+            String line = rawData.get(i);
+            // check for new category
+            String prefix = settings.getString("CATEGORY_PREFIX");
+            if (line.startsWith(prefix)) {
+                for (String cat: validCategories) {
+                    // check if the next chars after the category prefix match one of the valid categories
+                    if (line.substring(prefix.length()).strip().startsWith(cat)) {
+                        category = cat;  // switch to this category
+                    }
+                }
+            } else if (!line.startsWith(settings.getString("NAME_SKIP_LINE")) && line.strip().length()>0){
+                // treat the line as the entry for a new item
+                String[] parts = line.split("\t");  // split on tab
+                // first part is the name, everything else is metadata
+                String name = parts[0];
+                Item thisItem;
+                if (parts.length > 1) {
+                    String[] metadata = new String[parts.length-1];
+                    for (int j=1; j<parts.length; j++) {
+                        metadata[j - 1] = parts[j];
+                    }
+                    thisItem = new Item(name, category, metadata);
+                } else {
+                    thisItem = new Item(name, category);  // no metadata
+                }
+                results.add(thisItem);
+            }
+            i++;
+        }
+        return results;
+    }
+
     public static ArrayList<ImageIcon> loadImages(Config settings) {
         // size, position and spacing of the pictures in the grid imported from SIMS
         int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
