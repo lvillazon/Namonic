@@ -9,18 +9,23 @@ public class GUI extends JFrame implements ActionListener {
     private final JLabel faceLabel;
     private final JLabel scoreLabel;
     private final JLabel streakLabel;
+    private final JLabel correctLabel;
     private final JButton[] choices;
     private final JCheckBox[] filters;
     private final JButton filterAllButton;
     private final JButton filterClearButton;
     private final JLabel nameLabel;
     private final JLabel catLabel;
+    private final JLabel metadataLabel;
+    private final JLabel nameCount;
     private final Memoriser itemData;
     private int itemIndex;
+    private Item currentItem;
 
     public GUI(Config settings, Memoriser mem) {
         super("Namonic");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        itemData = mem;
 
         int MARGIN = settings.getInt("CHOICE_MARGIN");
         int MAX_CHOICES = settings.getInt("MAX_CHOICES");
@@ -57,11 +62,18 @@ public class GUI extends JFrame implements ActionListener {
             choicePanel.add(choices[i]);
             choicePanel.add(Box.createRigidArea(new Dimension(MARGIN, MARGIN/2)));
         }
-        // DEBUG also add name and category labels
+        // DEBUG name, category & metadata labels, just so I can check the file is read correctly
         nameLabel = new JLabel("name");
         catLabel = new JLabel("category");
+        metadataLabel = new JLabel("tags");
+        nameCount = new JLabel("total names");
         choicePanel.add(nameLabel);
         choicePanel.add(catLabel);
+        choicePanel.add(metadataLabel);
+        choicePanel.add(nameCount);
+
+        correctLabel = new JLabel();  // shows correct or wrong, when you answer
+        choicePanel.add(correctLabel);
         westPanel.add(choicePanel, BorderLayout.CENTER);
 
         // score
@@ -89,49 +101,106 @@ public class GUI extends JFrame implements ActionListener {
         filterClearButton.addActionListener(this);
         filterButtonPanel.add(filterClearButton);
         filterPanel.add(filterButtonPanel);
-        filters = new JCheckBox[7];  // years 7 to 13 = 7 filters
-        for(int i=0; i<7; i++) {
-            int year = i + 7;
-            filters[i] = new JCheckBox("Year "+year);
+        filters = new JCheckBox[mem.getCategoryCount()];  // 1 filter checkbox for each category
+        for(int i=0; i<filters.length; i++) {
+            filters[i] = new JCheckBox(mem.getCategoryName(i));
             filters[i].setAlignmentX(Component.LEFT_ALIGNMENT);
+            filters[i].setSelected(true);
+            itemData.setCategoryIncluded(i, true);  // also set the Memoriser state to match the GUI checkbox
+            filters[i].addActionListener(this);
             filterPanel.add(filters[i]);
         }
         eastPanel.add(filterPanel, BorderLayout.CENTER);
 
         setSize(new Dimension(WIDTH, HEIGHT));
 
-        // load student data
-        itemData = mem;
-        itemIndex = 0;
-        faceLabel.setIcon(itemData.getItem(itemIndex).getPicture());
-
-        faceLabel.setVisible(true);
-        repaint();
-        //pack();
+        // load initial item data
+        currentItem = itemData.chooseRandomly();
+        setItem(currentItem);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("All")) {
-            // set all checkboxes
-            for(JCheckBox filter: filters) {
-                filter.setSelected(true);
-            }
-        } else if (e.getActionCommand().equals("Clear")) {
-            // clear all checkboxes
-            for(JCheckBox filter: filters) {
-                filter.setSelected(false);
+        System.out.println(e.getActionCommand());
+        // check filter checkboxes
+        boolean clickedFilter = false;
+        for (int i=0; i<filters.length; i++) {
+            if (e.getSource() == filters[i]) {
+                itemData.setCategoryIncluded(i, filters[i].isSelected());
+                clickedFilter = true;
+                System.out.println("change filter "+i+" to " + filters[i].isSelected());
             }
         }
+        nameCount.setText(Integer.toString(itemData.getTotalItems()));
+        if (!clickedFilter) {
+
+            if (e.getActionCommand().equals("All")) {
+                // set all checkboxes
+                for (int i = 0; i < filters.length; i++) {
+                    filters[i].setSelected(true);
+                    itemData.setCategoryIncluded(i, true);
+                }
+            } else if (e.getActionCommand().equals("Clear")) {
+                // clear all checkboxes
+                for (int i = 0; i < filters.length; i++) {
+                    filters[i].setSelected(false);
+                    itemData.setCategoryIncluded(i, false);
+                }
+            }
 
 
-        // unused test functionality to advance to the next face
-        if (e.getActionCommand().equals("choice 1")) {
-            itemIndex = (itemIndex+1)%itemData.getTotalItems();
-            faceLabel.setIcon(itemData.getItem(itemIndex).getPicture());
-            nameLabel.setText(itemData.getItem(itemIndex).getName());
-            catLabel.setText(itemData.getItem(itemIndex).getCategory());
-            repaint();
+            // check if we chose the right name
+            System.out.println("clicked "+e.getActionCommand()+" correct = "+currentItem.getName());
+            if (e.getActionCommand().equals(currentItem.getName())) {
+                correctLabel.setText("Correct!");
+                currentItem = itemData.chooseRandomly();
+                setItem(currentItem);
+            } else {
+                correctLabel.setText("Wrong!");
+            }
         }
     }
+/*
+    // update all widgets to reflect the current item
+    private void setItem(int i) {
+        faceLabel.setIcon(itemData.getItem(i).getPicture());
+
+        // add random choices for this pic - one 1 is correct
+        String[] answers = itemData.getChoices(itemData.getItem(i), choices.length);
+        for (int j=0; j<choices.length; j++) {
+            choices[j].setText(answers[j]);
+        }
+
+        // DEBUG just to check - these values should be hidden in the real game
+        nameLabel.setText(itemData.getItem(i).getName());
+        catLabel.setText(itemData.getItem(i).getCategory());
+        String metaText = "";
+        for (int j=0; j<itemData.getMetadataCount(); j++) {
+            metaText = metaText + itemData.getMetadataName(j) + "=" + itemData.getItem(i).getMetadata(j) + ", ";
+        }
+        metadataLabel.setText(metaText);
+        repaint();
+    }
+*/
+    // update all widgets to reflect the current item
+    private void setItem(Item i) {
+        faceLabel.setIcon(i.getPicture());
+
+        // add random choices for this pic - one 1 is correct
+        String[] answers = itemData.getChoices(i, choices.length);
+        for (int j=0; j<choices.length; j++) {
+            choices[j].setText(answers[j]);
+        }
+
+        // DEBUG just to check - these values should be hidden in the real game
+        nameLabel.setText(i.getName());
+        catLabel.setText(i.getCategory());
+        String metaText = "";
+        for (int j=0; j<itemData.getMetadataCount(); j++) {
+            metaText = metaText + itemData.getMetadataName(j) + "=" + i.getMetadata(j) + ", ";
+        }
+        metadataLabel.setText(metaText);
+        repaint();
+    }
+
 }

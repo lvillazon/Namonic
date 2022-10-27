@@ -23,20 +23,31 @@ public class ResourceManager {
                         category = cat;  // switch to this category
                     }
                 }
+                i = i + settings.getInt("CATEGORY_HEADER_LINES");  // skip over any header row
             } else if (!line.startsWith(settings.getString("NAME_SKIP_LINE")) && line.strip().length()>0){
                 // treat the line as the entry for a new item
                 String[] parts = line.split("\t");  // split on tab
                 // first part is the name, everything else is metadata
                 String name = parts[0];
+                String firstName = "";
+                if (settings.getBool("SURNAME_FIRSTNAME")) {  // separate out the first name
+                    String[] name_parts = name.split(",");
+                    if (name_parts.length>1) {
+                        firstName = name_parts[1].trim();
+                    } else {
+                        ErrorHandler.ModalMessage("Invalid item name:" + name);
+                    }
+                }
+
                 Item thisItem;
                 if (parts.length > 1) {
                     String[] metadata = new String[parts.length-1];
                     for (int j=1; j<parts.length; j++) {
                         metadata[j - 1] = parts[j];
                     }
-                    thisItem = new Item(name, category, metadata);
+                    thisItem = new Item(name, firstName, category, metadata);
                 } else {
-                    thisItem = new Item(name, category);  // no metadata
+                    thisItem = new Item(name, firstName, category);  // no metadata
                 }
                 results.add(thisItem);
             }

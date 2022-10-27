@@ -45,4 +45,13 @@ public class Config {
             return 0;
         }
     }
+
+    public boolean getBool(String key) {
+        String value = getString(key).toUpperCase();
+        if (value.equals("TRUE") || value.equals("T") || value.equals("YES")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
