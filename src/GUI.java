@@ -19,6 +19,7 @@ public class GUI extends JFrame implements ActionListener {
     private final JLabel metadataLabel;
     private final JLabel nameCount;
     private final Memoriser itemData;
+    private final Config settings;
     private int itemIndex;
     private Item currentItem;
 
@@ -26,6 +27,7 @@ public class GUI extends JFrame implements ActionListener {
         super("Namonic");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         itemData = mem;
+        this.settings = settings;
 
         int MARGIN = settings.getInt("CHOICE_MARGIN");
         int MAX_CHOICES = settings.getInt("MAX_CHOICES");
@@ -115,7 +117,8 @@ public class GUI extends JFrame implements ActionListener {
         setSize(new Dimension(WIDTH, HEIGHT));
 
         // load initial item data
-        currentItem = itemData.chooseRandomly();
+        //currentItem = itemData.chooseRandomly();
+        currentItem = itemData.getItem(0);
         setItem(currentItem);
     }
 
@@ -148,40 +151,43 @@ public class GUI extends JFrame implements ActionListener {
                 }
             }
 
-
+            // check if we clicked a choice button
+            boolean choiceClicked = false;
+            for(JButton b: choices) {
+                if (e.getSource()==b) {
+                    choiceClicked = true;
+                }
+            }
             // check if we chose the right name
-            System.out.println("clicked "+e.getActionCommand()+" correct = "+currentItem.getName());
-            if (e.getActionCommand().equals(currentItem.getName())) {
-                correctLabel.setText("Correct!");
+            if (choiceClicked) {
+                // whether or not we are right, highlight the correct choice
+                JButton correctChoice = null;
+                for (JButton b: choices) {
+                    if (b.getText().equals(currentItem.getName())) {
+                        correctChoice = b;
+                    }
+                }
+                correctChoice.setBackground(Color.green);
+                System.out.println(correctChoice.getText());
+                repaint();
+                if (e.getActionCommand().equals(currentItem.getName())) {
+                    correctLabel.setText("Correct!");
+                    currentItem.MarkCorrect();
+                } else {
+                    correctLabel.setText("Wrong!");
+                    try {
+                        Thread.sleep(settings.getInt("WRONG_DELAY") * 10000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }                }
+                correctChoice.setBackground(null);
                 currentItem = itemData.chooseRandomly();
+                currentItem.MarkShown();
                 setItem(currentItem);
-            } else {
-                correctLabel.setText("Wrong!");
             }
         }
     }
-/*
-    // update all widgets to reflect the current item
-    private void setItem(int i) {
-        faceLabel.setIcon(itemData.getItem(i).getPicture());
 
-        // add random choices for this pic - one 1 is correct
-        String[] answers = itemData.getChoices(itemData.getItem(i), choices.length);
-        for (int j=0; j<choices.length; j++) {
-            choices[j].setText(answers[j]);
-        }
-
-        // DEBUG just to check - these values should be hidden in the real game
-        nameLabel.setText(itemData.getItem(i).getName());
-        catLabel.setText(itemData.getItem(i).getCategory());
-        String metaText = "";
-        for (int j=0; j<itemData.getMetadataCount(); j++) {
-            metaText = metaText + itemData.getMetadataName(j) + "=" + itemData.getItem(i).getMetadata(j) + ", ";
-        }
-        metadataLabel.setText(metaText);
-        repaint();
-    }
-*/
     // update all widgets to reflect the current item
     private void setItem(Item i) {
         faceLabel.setIcon(i.getPicture());
@@ -191,6 +197,9 @@ public class GUI extends JFrame implements ActionListener {
         for (int j=0; j<choices.length; j++) {
             choices[j].setText(answers[j]);
         }
+
+        // update score stats
+        scoreLabel.setText(itemData.getScore()+"/"+itemData.getAsked());
 
         // DEBUG just to check - these values should be hidden in the real game
         nameLabel.setText(i.getName());

@@ -12,6 +12,8 @@ public class ResourceManager {
         int i = settings.getInt("NAME_FILE_HEADER_LINES");  // skip any header lines in the file
         String category = "none";
         String[] validCategories = settings.getString("NAME_CATEGORIES").split(",");
+        int count=0;
+        int catCount=0;
         while (i<rawData.size()) {
             String line = rawData.get(i);
             // check for new category
@@ -19,8 +21,10 @@ public class ResourceManager {
             if (line.startsWith(prefix)) {
                 for (String cat: validCategories) {
                     // check if the next chars after the category prefix match one of the valid categories
-                    if (line.substring(prefix.length()).strip().startsWith(cat)) {
+                    if (line.substring(prefix.length()).strip().startsWith(cat.strip())) {
+                        System.out.println(catCount+" read in category "+category);
                         category = cat;  // switch to this category
+                        catCount=0;
                     }
                 }
                 i = i + settings.getInt("CATEGORY_HEADER_LINES");  // skip over any header row
@@ -38,7 +42,6 @@ public class ResourceManager {
                         ErrorHandler.ModalMessage("Invalid item name:" + name);
                     }
                 }
-
                 Item thisItem;
                 if (parts.length > 1) {
                     String[] metadata = new String[parts.length-1];
@@ -50,9 +53,15 @@ public class ResourceManager {
                     thisItem = new Item(name, firstName, category);  // no metadata
                 }
                 results.add(thisItem);
+                count++;
+                catCount++;
             }
             i++;
         }
+        //for(int j=0; j< results.size(); j++) {
+        //    System.out.println(results.get(j).getName());
+        //}
+        System.out.println(count+" countries read");
         return results;
     }
 
@@ -77,15 +86,18 @@ public class ResourceManager {
             try{
                 BufferedImage galleryImage = ImageIO.read(new File(filename));
                 int y = topMargin;
+                int count = 0;
                 while (y+height < galleryImage.getHeight()) {
                     int x = leftMargin;
                     while (x + width < galleryImage.getWidth()) {
                         ImageIcon icon = new ImageIcon(galleryImage.getSubimage(x, y, width, height));
                         images.add(icon);
+                        count++;
                         x = x + width + hSpacing;
                     }
                     y = y + height + vSpacing;
                 }
+                System.out.println(count + " from " + filename);
             } catch(Exception e){
                 ErrorHandler.ModalMessage(e.getLocalizedMessage() + "  " + filename);
             }

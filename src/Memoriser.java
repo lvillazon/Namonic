@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.function.Predicate;
 
 public class Memoriser {
     private ArrayList<Item> allItems;
@@ -29,6 +30,11 @@ public class Memoriser {
         } else {
             ErrorHandler.ModalMessage("image count doesn't match name count:" + pictures.size() + " vs " + allItems.size());
         }
+        // remove items with name "BLANK" - these are just used to pad the name list so it matches the gallery grid
+        String blankName = settings.getString("PADDING_NAME");
+        Predicate<Item> blankItem = item -> item.getName().equals(blankName);
+        allItems.removeIf(blankItem);
+        System.out.println(allItems.size() + " items stored, after removing blanks");
         filteredItems = getFilteredItems();
         rng = new Random();  // used for all random choices
     }
@@ -107,9 +113,21 @@ public class Memoriser {
         String[] results = new String[numberOfChoices];
         for (int i=0; i<numberOfChoices; i++) {
             int j = rng.nextInt(getTotalItems());
-            // keep picking random items until it is not the same as the correct one but is the same category
-            while (allItems.get(j) == correct || !allItems.get(j).getCategory().equals(correct.getCategory())) {
+            // keep picking random items until it is not the same as the correct one
+            // and isn't one we have already selected
+            // and is the same category as the correct answer
+            boolean acceptable = false;
+            while (!acceptable) {
                 j = rng.nextInt(getTotalItems());
+                if (allItems.get(j) != correct && allItems.get(j).getCategory().equals(correct.getCategory())) {
+                    acceptable = true;  // at least so far...
+                    // ... but check we haven't already picked it
+                    for (String alreadyPicked: results) {
+                        if (allItems.get(j).getName().equals(alreadyPicked)) {
+                            acceptable = false;
+                        }
+                    }
+                }
             }
             results[i] = allItems.get(j).getName();
         }
@@ -134,4 +152,24 @@ public class Memoriser {
         System.out.println("choosing item "+i+" = "+ allItems.get(i).getName());
         return allItems.get(i);
     }
+
+    // return total correct answers this game
+    public int getScore() {
+        // add up correct answers for all items
+        int total = 0;
+        for (Item i: allItems) {
+            total = total + i.getCorrectCount();
+        }
+        return total;
+    }
+
+    public int getAsked() {
+        // add up correct answers for all items
+        int total = 0;
+        for (Item i: allItems) {
+            total = total + i.getShowCount();
+        }
+        return total;
+    }
+
 }
