@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class GUI extends JFrame implements ActionListener {
 
@@ -18,6 +20,7 @@ public class GUI extends JFrame implements ActionListener {
     private final JLabel catLabel;
     private final JLabel metadataLabel;
     private final JLabel nameCount;
+    private final Timer answerDelay;  // used for delays when showing correct/wrong & showing a new question
     private final Memoriser itemData;
     private final Config settings;
     private int itemIndex;
@@ -26,6 +29,13 @@ public class GUI extends JFrame implements ActionListener {
     public GUI(Config settings, Memoriser mem) {
         super("Namonic");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {  // make sure data is autosaved on exit
+                super.windowClosing(e);
+                itemData.save();
+            }
+        });
         itemData = mem;
         this.settings = settings;
 
@@ -55,14 +65,18 @@ public class GUI extends JFrame implements ActionListener {
 
         // name options to choose from
         JPanel choicePanel = new JPanel();
-        choicePanel.setLayout(new BoxLayout(choicePanel, BoxLayout.PAGE_AXIS));
+        GridLayout choiceLayout = new GridLayout(0,1);
+        choiceLayout.setHgap(MARGIN/2);
+        choiceLayout.setVgap(MARGIN/2);
+        choicePanel.setLayout(choiceLayout);
         choices = new JButton[MAX_CHOICES];
         for (int i=0; i<MAX_CHOICES; i++) {
             choices[i] = new JButton("choice "+(i+1));
+            choices[i].setPreferredSize(new Dimension(150,40));
+//            choices[i].setSize(new Dimension(200,40));
             choices[i].setAlignmentX(Component.CENTER_ALIGNMENT);
             choices[i].addActionListener(this);
             choicePanel.add(choices[i]);
-            choicePanel.add(Box.createRigidArea(new Dimension(MARGIN, MARGIN/2)));
         }
         // DEBUG name, category & metadata labels, just so I can check the file is read correctly
         nameLabel = new JLabel("name");
@@ -74,9 +88,13 @@ public class GUI extends JFrame implements ActionListener {
         choicePanel.add(metadataLabel);
         choicePanel.add(nameCount);
 
-        correctLabel = new JLabel();  // shows correct or wrong, when you answer
-        choicePanel.add(correctLabel);
         westPanel.add(choicePanel, BorderLayout.CENTER);
+        answerDelay = new Timer(0, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                nextQuestion();
+            }
+        });
+        answerDelay.setRepeats(false);
 
         // score
         JPanel scorePanel = new JPanel(new FlowLayout());
@@ -89,6 +107,11 @@ public class GUI extends JFrame implements ActionListener {
         streakLabel = new JLabel("0");
         scorePanel.add(streakLabel);
         eastPanel.add(scorePanel, BorderLayout.NORTH);
+
+        correctLabel = new JLabel();  // shows correct or wrong, when you answer
+        correctLabel.setHorizontalAlignment(JLabel.CENTER);
+        correctLabel.setFont(correctLabel.getFont().deriveFont(72.0f));
+        mainPanel.add(correctLabel, BorderLayout.CENTER);
 
         // filters
         JPanel filterPanel = new JPanel();
@@ -171,21 +194,31 @@ public class GUI extends JFrame implements ActionListener {
                 System.out.println(correctChoice.getText());
                 repaint();
                 if (e.getActionCommand().equals(currentItem.getName())) {
-                    correctLabel.setText("Correct!");
-                    currentItem.MarkCorrect();
+                    correctLabel.setText("✔");
+                    correctLabel.setForeground(Color.green);
+                    itemData.markCorrect(currentItem);
+                    answerDelay.setInitialDelay(settings.getInt("RIGHT_DELAY"));
+                    answerDelay.start();
                 } else {
-                    correctLabel.setText("Wrong!");
-                    try {
-                        Thread.sleep(settings.getInt("WRONG_DELAY") * 10000);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }                }
-                correctChoice.setBackground(null);
-                currentItem = itemData.chooseRandomly();
-                currentItem.MarkShown();
-                setItem(currentItem);
+                    correctLabel.setText("❌");
+                    correctLabel.setForeground(Color.red);
+                    itemData.markWrong(currentItem);
+                    answerDelay.setInitialDelay(settings.getInt("WRONG_DELAY"));
+                    answerDelay.start();
+                }
             }
         }
+    }
+
+    private void nextQuestion() {
+        // reset all buttons to default appearance
+        for (JButton b: choices) {
+            b.setBackground(null);
+        }
+        correctLabel.setText("");
+        currentItem = itemData.chooseRandomly();
+        currentItem.MarkShown();
+        setItem(currentItem);
     }
 
     // update all widgets to reflect the current item
@@ -200,6 +233,7 @@ public class GUI extends JFrame implements ActionListener {
 
         // update score stats
         scoreLabel.setText(itemData.getScore()+"/"+itemData.getAsked());
+        streakLabel.setText(Integer.toString(itemData.getStreak()));
 
         // DEBUG just to check - these values should be hidden in the real game
         nameLabel.setText(i.getName());

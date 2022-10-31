@@ -3,9 +3,11 @@ import java.util.HashMap;
 
 public class Config {
     private HashMap<String, String> dictionary;
+    private String filename;
 
     public Config(String configFilename) {
-        ArrayList<String> rawConfig = FileHandler.readWholeFile(configFilename);
+        this.filename = configFilename;
+        ArrayList<String> rawConfig = FileHandler.readWholeFile(filename);
         dictionary = new HashMap<>();
         // config files expect the following syntax
         // lines beginning with // are ignored
@@ -53,5 +55,19 @@ public class Config {
         } else {
             return false;
         }
+    }
+
+    // if a key with the name exists, update it, otherwise create it
+    public void setString(String k, String newValue) {
+        dictionary.put(k.toUpperCase().trim(), newValue.trim());
+    }
+
+    // write all keys back to the file
+    public void save() {
+        ArrayList<String> rawData = new ArrayList<>();
+        for (String key: dictionary.keySet()) {
+            rawData.add(key + " = " + dictionary.get(key));
+        }
+        FileHandler.writeWholeFile("test.cfg", rawData);
     }
 }

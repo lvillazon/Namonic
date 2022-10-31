@@ -10,8 +10,11 @@ public class Memoriser {
     private String[] categoryList;  // titles of item categories, eg "Year 7", "Year 8"
     private boolean[] categoryIncluded;  // whether or not this category is included in random choices of items
     private Random rng;
+    private int streak;
+    private Config settings;
 
     public Memoriser(Config settings) {
+        this.settings = settings;
         ArrayList<ImageIcon> pictures = ResourceManager.loadImages(settings);
         allItems = ResourceManager.loadItemData(settings);
         metadataNames = settings.getString("ITEM_META").split(",");
@@ -37,6 +40,7 @@ public class Memoriser {
         System.out.println(allItems.size() + " items stored, after removing blanks");
         filteredItems = getFilteredItems();
         rng = new Random();  // used for all random choices
+        streak = 0;
     }
 
     public Item getItem(int i) {
@@ -170,6 +174,28 @@ public class Memoriser {
             total = total + i.getShowCount();
         }
         return total;
+    }
+
+    public void markCorrect(Item picked) {
+        picked.MarkCorrect();
+        streak++;
+    }
+
+    public void markWrong(Item picked) {
+        streak = 0;
+    }
+
+    public int getStreak() {
+        return streak;
+    }
+
+    // save scores for every item
+    public void save() {
+        for (Item i: allItems) {
+            String scoreStats = i.getCorrectCount() + "," + i.getShowCount();
+            settings.setString(i.getFullName(), scoreStats);
+        }
+        settings.save();
     }
 
 }
