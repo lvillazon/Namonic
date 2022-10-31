@@ -38,6 +38,7 @@ public class Memoriser {
         Predicate<Item> blankItem = item -> item.getName().equals(blankName);
         allItems.removeIf(blankItem);
         System.out.println(allItems.size() + " items stored, after removing blanks");
+        loadScores();
         filteredItems = getFilteredItems();
         rng = new Random();  // used for all random choices
         streak = 0;
@@ -122,7 +123,7 @@ public class Memoriser {
             // and is the same category as the correct answer
             boolean acceptable = false;
             while (!acceptable) {
-                j = rng.nextInt(getTotalItems());
+                j = rng.nextInt(allItems.size()-1);
                 if (allItems.get(j) != correct && allItems.get(j).getCategory().equals(correct.getCategory())) {
                     acceptable = true;  // at least so far...
                     // ... but check we haven't already picked it
@@ -146,7 +147,7 @@ public class Memoriser {
         boolean ok = false;
         int i = -1;
         while (!ok) {
-            i = rng.nextInt(getTotalItems());
+            i = rng.nextInt(allItems.size()-1);
             for (int j=0; j<categoryList.length; j++) {
                 if (categoryIncluded[j] && allItems.get(i).getCategory().equals(categoryList[j])) {
                     ok = true;
@@ -155,6 +156,21 @@ public class Memoriser {
         }
         System.out.println("choosing item "+i+" = "+ allItems.get(i).getName());
         return allItems.get(i);
+    }
+
+    // return a random item from those that have the lowest scores in the currently selected categories
+    public Item chooseWorstRemembered() {
+        // sort the currently selected items by score & return the bottom item
+        // if we sort in descending order, then the last item is guaranteed to have the lowest score after 1 pass
+        // avoiding all the inefficiencies of normal bubble sorting
+        for (int i=0; i<filteredItems.size()-1; i++) {
+            if (filteredItems.get(i).compareTo(filteredItems.get(i + 1)) < 0) {
+                Item temp = filteredItems.get(i);
+                filteredItems.set(i, filteredItems.get(i+1));
+                filteredItems.set(i+1, temp);
+            }
+        }
+        return filteredItems.get(filteredItems.size()-1);
     }
 
     // return total correct answers this game
@@ -177,11 +193,13 @@ public class Memoriser {
     }
 
     public void markCorrect(Item picked) {
-        picked.MarkCorrect();
+        picked.markCorrect();
+        picked.markShown();
         streak++;
     }
 
     public void markWrong(Item picked) {
+        picked.markShown();
         streak = 0;
     }
 
@@ -192,10 +210,43 @@ public class Memoriser {
     // save scores for every item
     public void save() {
         for (Item i: allItems) {
-            String scoreStats = i.getCorrectCount() + "," + i.getShowCount();
-            settings.setString(i.getFullName(), scoreStats);
+            String scoreStats = i.getCorrectCount() + "/" + i.getShowCount();
+            settings.setString("[scores]", i.getFullName(), scoreStats);
         }
         settings.save();
+    }
+
+    // restore the scores saved from the previous session in the config file
+    private void loadScores() {
+        for (Item i: allItems) {
+            String[] scoreStats = settings.getString(i.getFullName()).split("/");
+            if (scoreStats.length>0) {
+                try {
+                i.setScore(Integer.parseInt(scoreStats[0]));
+                i.setShown(Integer.parseInt(scoreStats[1]));
+                }
+                catch (NumberFormatException e) {
+                    ErrorHandler.ModalMessage("invalid score value "+scoreStats[0]+"/"+scoreStats[1]+" for "+i.getFullName());
+                }
+            }
+        }
+    }
+
+    // percentage correct over all sessions, rounded to int
+    public int getCategoryScore(String cat) {
+        int totalScore = 0;
+        int totalShown = 0;
+        for (int i=0; i<allItems.size(); i++) {
+            if (allItems.get(i).getCategory().equals(cat)) {
+                totalScore += allItems.get(i).getCorrectCount();
+                totalShown += allItems.get(i).getShowCount();
+            }
+        }
+        if (totalShown>0) {
+            return (int) ((double)totalScore / (double)totalShown * 100);
+        } else {
+            return 0;
+        }
     }
 
 }

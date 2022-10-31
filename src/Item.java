@@ -75,7 +75,29 @@ public class Item {
     }
 
     public int getShowCount() { return showCount; }
-    public void MarkShown() { showCount++; }
+    public void markShown() { showCount++; }
     public int getCorrectCount() { return correctCount; }
-    public void MarkCorrect() { correctCount++; }
+    public void markCorrect() { correctCount++; }
+    public void setScore(int s) {
+        correctCount = s;
+    }
+
+    public void setShown(int s) {
+        if (s>correctCount) {
+            showCount = s;
+        } else {
+            showCount = correctCount;  // impossible to have got it right more times than you were shown it!
+        }
+    }
+
+    // return -ve if "less than", +ve if "greater than" or 0 if the same
+    // the item with the lowest correctCount is the least
+    // in the event of a draw, the showCount is used to decide
+    public int compareTo(Item other) {
+        int difference = correctCount - other.correctCount;
+        if (difference == 0) {
+            difference = showCount - other.showCount;
+        }
+        return difference;
+    }
 }

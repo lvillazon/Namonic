@@ -2,39 +2,49 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Config {
-    private HashMap<String, String> dictionary;
+    // each config section is a hashmap. The section name is used as a key for a hashmap of hashmaps
+    private HashMap<String, HashMap<String, String>> dictionaries;  // one hashmap per section
     private String filename;
 
     public Config(String configFilename) {
         this.filename = configFilename;
         ArrayList<String> rawConfig = FileHandler.readWholeFile(filename);
-        dictionary = new HashMap<>();
+        dictionaries = new HashMap<>();
+        HashMap<String, String> sectionDict = null;
         // config files expect the following syntax
         // lines beginning with // are ignored
         // so are blank lines
+        // lines beginning with [ are assumed to be section headers
         // other lines should take the form
         // VALUE_NAME = "value",
         // or
         // VALUE_NAME = 0,
+        String sectionName = "[default]";
         for (String s: rawConfig) {
-            if(!s.startsWith("//") && s.contains("=")) {  // ignore comment lines & those without a =
-                String[] keyPair = s.split("=");
-                String key = keyPair[0].toUpperCase();  // store keys as upper case
-                String value = keyPair[1].replace("\"", "");  //remove quotes from value strings
-                dictionary.put(key.trim(), value.trim());  // also remove whitespace at either end
+            if(!s.startsWith("//")) {  // ignore comment lines
+                if (s.startsWith("[")) {
+                  sectionName = s;
+                } else if (s.contains("=")) { // assume this is a key = value
+                    String[] keyPair = s.split("=");
+                    String key = keyPair[0].toUpperCase();  // store keys as upper case
+                    String value = keyPair[1].replace("\"", "");  //remove quotes from value strings
+                    setString(sectionName, key.trim(), value.trim());  // also remove whitespace at either end
+                }
             }
         }
     }
 
     public String getString(String k) {
         String key = k.toUpperCase();  // keys are always stored in upper case
-        if (dictionary.containsKey(key)) {
-            String value = dictionary.get(key);
-            return dictionary.get(key);
-        } else {
-            ErrorHandler.ModalMessage("config value not found:" + key);
-            return "";
+        // check all section dictionaries for the 1st matching key
+        for (String d: dictionaries.keySet()) {
+            if (dictionaries.get(d).containsKey(key)) {
+                String value = dictionaries.get(d).get(key);
+                return value;  // scruffy early return but the alternatives all seem messier
+            }
         }
+        ErrorHandler.ModalMessage("config value not found:" + key);
+        return "";
     }
 
     public int getInt(String key) {
@@ -58,16 +68,24 @@ public class Config {
     }
 
     // if a key with the name exists, update it, otherwise create it
-    public void setString(String k, String newValue) {
-        dictionary.put(k.toUpperCase().trim(), newValue.trim());
+    public void setString(String section, String k, String newValue) {
+        // check the section dictionary for a 1st matching key
+        String key = k.toUpperCase();  // keys are always stored in upper case
+        if (!dictionaries.containsKey(section)) {  // create the section dict if necessary
+            dictionaries.put(section, new HashMap<>());
+        }
+        dictionaries.get(section).put(key, newValue);
     }
 
     // write all keys back to the file
     public void save() {
         ArrayList<String> rawData = new ArrayList<>();
-        for (String key: dictionary.keySet()) {
-            rawData.add(key + " = " + dictionary.get(key));
+        for (String section: dictionaries.keySet()) {
+            rawData.add(section);
+            for (String key: dictionaries.get(section).keySet()) {
+                rawData.add(key + " = " + dictionaries.get(section).get(key));
+            }
         }
-        FileHandler.writeWholeFile("test.cfg", rawData);
+        FileHandler.writeWholeFile(filename, rawData);
     }
 }

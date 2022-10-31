@@ -13,13 +13,16 @@ public class GUI extends JFrame implements ActionListener {
     private final JLabel streakLabel;
     private final JLabel correctLabel;
     private final JButton[] choices;
+    private final JLabel[] categoryScores;
     private final JCheckBox[] filters;
     private final JButton filterAllButton;
     private final JButton filterClearButton;
+    /*
     private final JLabel nameLabel;
     private final JLabel catLabel;
     private final JLabel metadataLabel;
     private final JLabel nameCount;
+    */
     private final Timer answerDelay;  // used for delays when showing correct/wrong & showing a new question
     private final Memoriser itemData;
     private final Config settings;
@@ -73,12 +76,13 @@ public class GUI extends JFrame implements ActionListener {
         for (int i=0; i<MAX_CHOICES; i++) {
             choices[i] = new JButton("choice "+(i+1));
             choices[i].setPreferredSize(new Dimension(150,40));
-//            choices[i].setSize(new Dimension(200,40));
+            choices[i].setSize(new Dimension(150,40));
             choices[i].setAlignmentX(Component.CENTER_ALIGNMENT);
             choices[i].addActionListener(this);
             choicePanel.add(choices[i]);
         }
         // DEBUG name, category & metadata labels, just so I can check the file is read correctly
+        /*
         nameLabel = new JLabel("name");
         catLabel = new JLabel("category");
         metadataLabel = new JLabel("tags");
@@ -87,7 +91,7 @@ public class GUI extends JFrame implements ActionListener {
         choicePanel.add(catLabel);
         choicePanel.add(metadataLabel);
         choicePanel.add(nameCount);
-
+         */
         westPanel.add(choicePanel, BorderLayout.CENTER);
         answerDelay = new Timer(0, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -127,22 +131,33 @@ public class GUI extends JFrame implements ActionListener {
         filterButtonPanel.add(filterClearButton);
         filterPanel.add(filterButtonPanel);
         filters = new JCheckBox[mem.getCategoryCount()];  // 1 filter checkbox for each category
+        categoryScores = new JLabel[mem.getCategoryCount()];  // also one score %
         for(int i=0; i<filters.length; i++) {
+            JPanel categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2,0));
+            //categoryPanel.setPreferredSize(new Dimension(100,10));
+            categoryScores[i] = new JLabel("0%");
+            categoryPanel.add(categoryScores[i]);
             filters[i] = new JCheckBox(mem.getCategoryName(i));
+            filters[i].setPreferredSize(new Dimension(100,20));
             filters[i].setAlignmentX(Component.LEFT_ALIGNMENT);
             filters[i].setSelected(true);
             itemData.setCategoryIncluded(i, true);  // also set the Memoriser state to match the GUI checkbox
             filters[i].addActionListener(this);
-            filterPanel.add(filters[i]);
+            categoryPanel.add(filters[i]);
+            filterPanel.add(categoryPanel);
+            filterPanel.add(Box.createRigidArea(new Dimension(10,5)));
         }
+        filterPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+        filterPanel.add(Box.createVerticalGlue());
         eastPanel.add(filterPanel, BorderLayout.CENTER);
 
         setSize(new Dimension(WIDTH, HEIGHT));
 
         // load initial item data
-        //currentItem = itemData.chooseRandomly();
-        currentItem = itemData.getItem(0);
+        currentItem = itemData.chooseRandomly();
+        //currentItem = itemData.getItem(0);
         setItem(currentItem);
+        updateCategoryScores();
     }
 
     @Override
@@ -157,7 +172,7 @@ public class GUI extends JFrame implements ActionListener {
                 System.out.println("change filter "+i+" to " + filters[i].isSelected());
             }
         }
-        nameCount.setText(Integer.toString(itemData.getTotalItems()));
+        // DEBUG nameCount.setText(Integer.toString(itemData.getTotalItems()));
         if (!clickedFilter) {
 
             if (e.getActionCommand().equals("All")) {
@@ -197,6 +212,7 @@ public class GUI extends JFrame implements ActionListener {
                     correctLabel.setText("✔");
                     correctLabel.setForeground(Color.green);
                     itemData.markCorrect(currentItem);
+                    currentItem.markShown();
                     answerDelay.setInitialDelay(settings.getInt("RIGHT_DELAY"));
                     answerDelay.start();
                 } else {
@@ -206,7 +222,15 @@ public class GUI extends JFrame implements ActionListener {
                     answerDelay.setInitialDelay(settings.getInt("WRONG_DELAY"));
                     answerDelay.start();
                 }
+                updateCategoryScores();
             }
+        }
+    }
+
+    private void updateCategoryScores() {
+        // update category scores
+        for (int i=0; i<categoryScores.length; i++) {
+            categoryScores[i].setText(itemData.getCategoryScore(filters[i].getText()) + "%");
         }
     }
 
@@ -216,8 +240,7 @@ public class GUI extends JFrame implements ActionListener {
             b.setBackground(null);
         }
         correctLabel.setText("");
-        currentItem = itemData.chooseRandomly();
-        currentItem.MarkShown();
+        currentItem = itemData.chooseWorstRemembered();
         setItem(currentItem);
     }
 
@@ -236,6 +259,7 @@ public class GUI extends JFrame implements ActionListener {
         streakLabel.setText(Integer.toString(itemData.getStreak()));
 
         // DEBUG just to check - these values should be hidden in the real game
+        /*
         nameLabel.setText(i.getName());
         catLabel.setText(i.getCategory());
         String metaText = "";
@@ -243,6 +267,7 @@ public class GUI extends JFrame implements ActionListener {
             metaText = metaText + itemData.getMetadataName(j) + "=" + i.getMetadata(j) + ", ";
         }
         metadataLabel.setText(metaText);
+         */
         repaint();
     }
 
