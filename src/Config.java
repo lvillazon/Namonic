@@ -43,7 +43,7 @@ public class Config {
                 return value;  // scruffy early return but the alternatives all seem messier
             }
         }
-        ErrorHandler.ModalMessage("config value not found:" + key);
+        System.out.println("config value not found:" + key);
         return "";
     }
 

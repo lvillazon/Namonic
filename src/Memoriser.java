@@ -219,15 +219,20 @@ public class Memoriser {
     // restore the scores saved from the previous session in the config file
     private void loadScores() {
         for (Item i: allItems) {
-            String[] scoreStats = settings.getString(i.getFullName()).split("/");
-            if (scoreStats.length>0) {
-                try {
-                i.setScore(Integer.parseInt(scoreStats[0]));
-                i.setShown(Integer.parseInt(scoreStats[1]));
+            String statLine = settings.getString(i.getFullName());
+            if (!statLine.equals("")) {
+                String[] scoreStats = statLine.split("/");
+                if (scoreStats.length > 0) {
+                    try {
+                        i.setScore(Integer.parseInt(scoreStats[0]));
+                        i.setShown(Integer.parseInt(scoreStats[1]));
+                    } catch (NumberFormatException e) {
+                        ErrorHandler.ModalMessage("invalid score value " + scoreStats[0] + "/" + scoreStats[1] + " for " + i.getFullName());
+                    }
                 }
-                catch (NumberFormatException e) {
-                    ErrorHandler.ModalMessage("invalid score value "+scoreStats[0]+"/"+scoreStats[1]+" for "+i.getFullName());
-                }
+            } else {
+                i.setScore(0);
+                i.setShown(0);
             }
         }
     }

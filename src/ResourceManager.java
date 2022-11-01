@@ -1,5 +1,6 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ public class ResourceManager {
     public static ArrayList<ImageIcon> loadImages(Config settings) {
         // size, position and spacing of the pictures in the grid imported from SIMS
         int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
+        int bottomMargin = settings.getInt("GALLERY_BOTTOM_MARGIN");
         int leftMargin = settings.getInt("GALLERY_LEFT_MARGIN");
         int hSpacing = settings.getInt("GALLERY_H_SPACING");
         int vSpacing = settings.getInt("GALLERY_V_SPACING");
@@ -87,11 +89,16 @@ public class ResourceManager {
                 BufferedImage galleryImage = ImageIO.read(new File(filename));
                 int y = topMargin;
                 int count = 0;
-                while (y+height < galleryImage.getHeight()) {
+                while (y+height < galleryImage.getHeight()-bottomMargin) {
                     int x = leftMargin;
                     while (x + width < galleryImage.getWidth()) {
                         ImageIcon icon = new ImageIcon(galleryImage.getSubimage(x, y, width, height));
-                        images.add(icon);
+                        // scale it to a suitable size
+                        Image scaled = icon.getImage().getScaledInstance(
+                                settings.getInt("DISPLAY_IMAGE_WIDTH"),
+                                settings.getInt("DISPLAY_IMAGE_HEIGHT"),
+                                Image.SCALE_SMOOTH);
+                        images.add(new ImageIcon(scaled));
                         count++;
                         x = x + width + hSpacing;
                     }

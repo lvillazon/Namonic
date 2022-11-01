@@ -155,7 +155,7 @@ public class GUI extends JFrame implements ActionListener {
 
         // load initial item data
         currentItem = itemData.chooseRandomly();
-        //currentItem = itemData.getItem(0);
+        //currentItem = itemData.getItem(20);
         setItem(currentItem);
         updateCategoryScores();
     }
