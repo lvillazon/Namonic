@@ -153,11 +153,18 @@ public class GUI extends JFrame implements ActionListener {
 
         setSize(new Dimension(WIDTH, HEIGHT));
 
-        // load initial item data
-        currentItem = itemData.chooseRandomly();
-        //currentItem = itemData.getItem(20);
-        setItem(currentItem);
-        updateCategoryScores();
+        if (itemData.getTotalItems() >0) {
+            // load initial item data
+            currentItem = itemData.chooseRandomly();
+            //currentItem = itemData.getItem(20);
+            setItem(currentItem);
+            updateCategoryScores();
+            setVisible(true);
+        } else {
+            // no data loaded, so show the import window
+            ImportGUI importing = new ImportGUI(settings);
+            importing.setVisible(true);
+        }
     }
 
     @Override
@@ -246,28 +253,30 @@ public class GUI extends JFrame implements ActionListener {
 
     // update all widgets to reflect the current item
     private void setItem(Item i) {
-        faceLabel.setIcon(i.getPicture());
+        if (i != null) {
+            faceLabel.setIcon(i.getPicture());
 
-        // add random choices for this pic - one 1 is correct
-        String[] answers = itemData.getChoices(i, choices.length);
-        for (int j=0; j<choices.length; j++) {
-            choices[j].setText(answers[j]);
+            // add random choices for this pic - one 1 is correct
+            String[] answers = itemData.getChoices(i, choices.length);
+            for (int j = 0; j < choices.length; j++) {
+                choices[j].setText(answers[j]);
+            }
+
+            // update score stats
+            scoreLabel.setText(itemData.getScore() + "/" + itemData.getAsked());
+            streakLabel.setText(Integer.toString(itemData.getStreak()));
+
+            // DEBUG just to check - these values should be hidden in the real game
+            /*
+            nameLabel.setText(i.getName());
+            catLabel.setText(i.getCategory());
+            String metaText = "";
+            for (int j=0; j<itemData.getMetadataCount(); j++) {
+                metaText = metaText + itemData.getMetadataName(j) + "=" + i.getMetadata(j) + ", ";
+            }
+            metadataLabel.setText(metaText);
+             */
         }
-
-        // update score stats
-        scoreLabel.setText(itemData.getScore()+"/"+itemData.getAsked());
-        streakLabel.setText(Integer.toString(itemData.getStreak()));
-
-        // DEBUG just to check - these values should be hidden in the real game
-        /*
-        nameLabel.setText(i.getName());
-        catLabel.setText(i.getCategory());
-        String metaText = "";
-        for (int j=0; j<itemData.getMetadataCount(); j++) {
-            metaText = metaText + itemData.getMetadataName(j) + "=" + i.getMetadata(j) + ", ";
-        }
-        metadataLabel.setText(metaText);
-         */
         repaint();
     }
 

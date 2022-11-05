@@ -143,19 +143,23 @@ public class Memoriser {
 
     // pick an item at random from all the currently selected categories
     public Item chooseRandomly() {
-        // keep picking random items until it is one of the currently selected categories
-        boolean ok = false;
-        int i = -1;
-        while (!ok) {
-            i = rng.nextInt(allItems.size()-1);
-            for (int j=0; j<categoryList.length; j++) {
-                if (categoryIncluded[j] && allItems.get(i).getCategory().equals(categoryList[j])) {
-                    ok = true;
+        if (allItems.size() >0) {
+            // keep picking random items until it is one of the currently selected categories
+            boolean ok = false;
+            int i = -1;
+            while (!ok) {
+                i = rng.nextInt(allItems.size() - 1);
+                for (int j = 0; j < categoryList.length; j++) {
+                    if (categoryIncluded[j] && allItems.get(i).getCategory().equals(categoryList[j])) {
+                        ok = true;
+                    }
                 }
             }
+            System.out.println("choosing item " + i + " = " + allItems.get(i).getName());
+            return allItems.get(i);
+        } else {
+            return null;
         }
-        System.out.println("choosing item "+i+" = "+ allItems.get(i).getName());
-        return allItems.get(i);
     }
 
     // return a random item from those that have the lowest scores in the currently selected categories

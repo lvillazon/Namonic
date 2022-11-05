@@ -7,6 +7,5 @@ public class Main {
         Config settings = new Config("namonic.cfg");
         Memoriser students = new Memoriser(settings);
         GUI mainGUI = new GUI(settings, students); // size of window
-        mainGUI.setVisible(true);
     }
 }

@@ -1,16 +1,18 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Config {
     // each config section is a hashmap. The section name is used as a key for a hashmap of hashmaps
-    private HashMap<String, HashMap<String, String>> dictionaries;  // one hashmap per section
+    private LinkedHashMap<String, LinkedHashMap<String, String>> dictionaries;  // one hashmap per section
     private String filename;
+    private final String default_section = "[default]";
 
     public Config(String configFilename) {
         this.filename = configFilename;
         ArrayList<String> rawConfig = FileHandler.readWholeFile(filename);
-        dictionaries = new HashMap<>();
-        HashMap<String, String> sectionDict = null;
+        dictionaries = new LinkedHashMap<>();
+        LinkedHashMap<String, String> sectionDict = null;
         // config files expect the following syntax
         // lines beginning with // are ignored
         // so are blank lines
@@ -19,7 +21,7 @@ public class Config {
         // VALUE_NAME = "value",
         // or
         // VALUE_NAME = 0,
-        String sectionName = "[default]";
+        String sectionName = default_section;
         for (String s: rawConfig) {
             if(!s.startsWith("//")) {  // ignore comment lines
                 if (s.startsWith("[")) {
@@ -27,8 +29,13 @@ public class Config {
                 } else if (s.contains("=")) { // assume this is a key = value
                     String[] keyPair = s.split("=");
                     String key = keyPair[0].toUpperCase();  // store keys as upper case
-                    String value = keyPair[1].replace("\"", "");  //remove quotes from value strings
-                    setString(sectionName, key.trim(), value.trim());  // also remove whitespace at either end
+                    if (keyPair.length>1) {
+                        String value = keyPair[1].replace("\"", "");  //remove quotes from value strings
+                        setString(sectionName, key.trim(), value.trim());  // also remove whitespace at either end
+                    } else {
+                        // handle situations where a key in the config file does not have a value eg "ITEM_META ="
+                        setString(sectionName, key.trim(), "");
+                    }
                 }
             }
         }
@@ -72,9 +79,14 @@ public class Config {
         // check the section dictionary for a 1st matching key
         String key = k.toUpperCase();  // keys are always stored in upper case
         if (!dictionaries.containsKey(section)) {  // create the section dict if necessary
-            dictionaries.put(section, new HashMap<>());
+            dictionaries.put(section, new LinkedHashMap<>());
         }
         dictionaries.get(section).put(key, newValue);
+    }
+
+    // streamlined version that sets keys in the default section
+    public void setString(String key, String newValue) {
+        setString(default_section, key, newValue);
     }
 
     // write all keys back to the file

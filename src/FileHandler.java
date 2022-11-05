@@ -1,3 +1,7 @@
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+// download from
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -25,6 +29,30 @@ public class FileHandler {
             ErrorHandler.ModalMessage(e.getLocalizedMessage() + "  " + filename);
         }
         return results;
+    }
+
+    public static BufferedImage readPDF(String filename) {
+        try {
+            // load PDF
+            File file = new File(filename);
+            PDDocument document = PDDocument.load(file);
+            PDFRenderer renderer = new PDFRenderer(document);
+            BufferedImage pdfImage = renderer.renderImage(0);  //TODO try other pages
+            return pdfImage;
+        } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage() + "  " + filename);
+            return null;
+        }
+    }
+
+    public static BufferedImage readImage(String filename) {
+        try {
+            BufferedImage image = ImageIO.read(new File(filename));
+            return image;
+        } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage() + "  " + filename);
+            return null;
+        }
     }
 
     public static void writeToFile(String filename, String text, boolean append) {
@@ -85,29 +113,36 @@ public class FileHandler {
         } else {
             matchExtension = "";
         }
-        // loop through all files in the folder and keep the ones that match
-        for (String f: getAllFiles(folder)) {
-            String[] fParts = f.split("\\.");
-            // check the extension matches 1st
-            if (matchExtension.equals("") || matchExtension.equals("*") ||
-                    (fParts.length>1 && fParts[1].equals(matchExtension))) {
-                // now check the filename matches
-                if (matchName.startsWith("*")) {
-                    String nonWildPart = matchName.substring(1);  // all but the initial *
-                    if (fParts[0].endsWith(nonWildPart)) {
-                        results.add(folder+"\\"+f);
-                        //System.out.println("starting match " + f);
-                    }
-                } else if (matchName.endsWith("*")) {
-                    String nonWildPart = matchName.substring(0, matchName.length()-1);  // all but trailing *
-                    if (fParts[0].startsWith(nonWildPart)) {
-                        results.add(folder+"\\"+f);
-                        //System.out.println("ending match " + f);
+        String[] allFiles = getAllFiles(folder);
+        if (allFiles != null) {
+            // loop through all files in the folder and keep the ones that match
+            for (String f : getAllFiles(folder)) {
+                String[] fParts = f.split("\\.");
+                // check the extension matches 1st
+                if (matchExtension.equals("") || matchExtension.equals("*") ||
+                        (fParts.length > 1 && fParts[1].equals(matchExtension))) {
+                    // now check the filename matches
+                    if (matchName.startsWith("*")) {
+                        String nonWildPart = matchName.substring(1);  // all but the initial *
+                        if (fParts[0].endsWith(nonWildPart)) {
+                            results.add(folder + "\\" + f);
+                            //System.out.println("starting match " + f);
+                        }
+                    } else if (matchName.endsWith("*")) {
+                        String nonWildPart = matchName.substring(0, matchName.length() - 1);  // all but trailing *
+                        if (fParts[0].startsWith(nonWildPart)) {
+                            results.add(folder + "\\" + f);
+                            //System.out.println("ending match " + f);
+                        }
+                    } else if (matchName.equals(fParts[0])) {
+                        results.add(folder + "\\" + f);
                     }
                 }
             }
+            return results.toArray(new String[results.size()]);
+        } else {
+            return new String[0];  // return empty array if no files found in the folder
         }
-        return results.toArray(new String[results.size()]);
     }
 
     // save a JPanel as a PNG file (overwrites if it already exists)

@@ -76,37 +76,37 @@ public class ResourceManager {
         int width = settings.getInt("GALLERY_IMAGE_WIDTH");
         int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
 
+        ArrayList<ImageIcon> images = new ArrayList<>();
+
         // look for all image gallery files that match the wildcard expression
         String[] galleryFiles = FileHandler.getMatchingFiles(
                 settings.getString("GALLERY_FOLDER"),
                 settings.getString("GALLERY_FILE_WILDCARD"));
-        if (galleryFiles.length == 0) {
-            ErrorHandler.ModalMessage("No gallery files found! Check cfg file");
-        }
-        ArrayList<ImageIcon> images = new ArrayList<>();
-        for(String filename: galleryFiles) {
-            try{
-                BufferedImage galleryImage = ImageIO.read(new File(filename));
-                int y = topMargin;
-                int count = 0;
-                while (y+height < galleryImage.getHeight()-bottomMargin) {
-                    int x = leftMargin;
-                    while (x + width < galleryImage.getWidth()) {
-                        ImageIcon icon = new ImageIcon(galleryImage.getSubimage(x, y, width, height));
-                        // scale it to a suitable size
-                        Image scaled = icon.getImage().getScaledInstance(
-                                settings.getInt("DISPLAY_IMAGE_WIDTH"),
-                                settings.getInt("DISPLAY_IMAGE_HEIGHT"),
-                                Image.SCALE_SMOOTH);
-                        images.add(new ImageIcon(scaled));
-                        count++;
-                        x = x + width + hSpacing;
+        if (galleryFiles.length > 0) {
+            for (String filename : galleryFiles) {
+                try {
+                    BufferedImage galleryImage = ImageIO.read(new File(filename));
+                    int y = topMargin;
+                    int count = 0;
+                    while (y + height < galleryImage.getHeight() - bottomMargin) {
+                        int x = leftMargin;
+                        while (x + width < galleryImage.getWidth()) {
+                            ImageIcon icon = new ImageIcon(galleryImage.getSubimage(x, y, width, height));
+                            // scale it to a suitable size
+                            Image scaled = icon.getImage().getScaledInstance(
+                                    settings.getInt("DISPLAY_IMAGE_WIDTH"),
+                                    settings.getInt("DISPLAY_IMAGE_HEIGHT"),
+                                    Image.SCALE_SMOOTH);
+                            images.add(new ImageIcon(scaled));
+                            count++;
+                            x = x + width + hSpacing;
+                        }
+                        y = y + height + vSpacing;
                     }
-                    y = y + height + vSpacing;
+                    System.out.println(count + " from " + filename);
+                } catch (Exception e) {
+                    System.out.println(e.getLocalizedMessage() + "  " + filename);
                 }
-                System.out.println(count + " from " + filename);
-            } catch(Exception e){
-                ErrorHandler.ModalMessage(e.getLocalizedMessage() + "  " + filename);
             }
         }
         return images;
