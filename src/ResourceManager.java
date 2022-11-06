@@ -39,6 +39,7 @@ public class ResourceManager {
                     String[] name_parts = name.split(",");
                     if (name_parts.length>1) {
                         firstName = name_parts[1].trim();
+                        System.out.println(firstName);
                     } else {
                         ErrorHandler.ModalMessage("Invalid item name:" + name);
                     }
@@ -85,7 +86,7 @@ public class ResourceManager {
         if (galleryFiles.length > 0) {
             for (String filename : galleryFiles) {
                 try {
-                    BufferedImage galleryImage = ImageIO.read(new File(filename));
+                    BufferedImage galleryImage = FileHandler.readImage(filename);
                     int y = topMargin;
                     int count = 0;
                     while (y + height < galleryImage.getHeight() - bottomMargin) {

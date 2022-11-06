@@ -45,13 +45,20 @@ public class FileHandler {
         }
     }
 
-    public static BufferedImage readImage(String filename) {
+    public static BufferedImage readNormalImage(String filename) {
         try {
             BufferedImage image = ImageIO.read(new File(filename));
             return image;
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage() + "  " + filename);
             return null;
+        }
+    }
+    public static BufferedImage readImage(String filename) {
+        if (filename.toUpperCase().endsWith(".PDF")) {
+            return readPDF(filename);
+        } else {
+            return readNormalImage(filename);
         }
     }
 

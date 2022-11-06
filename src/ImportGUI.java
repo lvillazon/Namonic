@@ -1,20 +1,23 @@
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class ImportGUI extends JFrame implements ActionListener {
 
     private final JTextField filepathField;
     private final JTextField wildcardField;
     private final JLabel filesFound;
-    private JLabel gallerySheet;
+    //private JLabel gallerySheet;
+    private GalleryPanel gallerySheet;
     private final JButton checkButton;
     private final JButton saveButton;
+    private final JButton[] valueButtons;
+    private final JButton plusOneButton;
+    private final JButton plusTenButton;
+    private final JButton minusOneButton;
+    private final JButton minusTenButton;
+    private final JLabel valueLabel;
     private final Config settings;
     private String[] fileMatches;
 
@@ -79,47 +82,119 @@ public class ImportGUI extends JFrame implements ActionListener {
         northPanel.add(wildcardPanel, BorderLayout.CENTER);
 
         // the panel that actually shows the gallery image
-        gallerySheet = new JLabel();
+        gallerySheet = new GalleryPanel(
+                settings.getInt("GALLERY_LEFT_MARGIN"),
+                settings.getInt("GALLERY_TOP_MARGIN"),
+                settings.getInt("GALLERY_BOTTOM_MARGIN"),
+                settings.getInt("GALLERY_H_SPACING"),
+                settings.getInt("GALLERY_V_SPACING"),
+                settings.getInt("GALLERY_IMAGE_WIDTH"),
+                settings.getInt("GALLERY_IMAGE_HEIGHT")
+        );
         centrePanel.add(gallerySheet);
-        gallerySheet.setIcon(getGalleryImage());
         checkMatchingFiles();  // preload the number of matching files for the current folder/wildcard
 
         // the panel for editing and saving settings
-        JPanel editPanel = new JPanel();
-        editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.LINE_AXIS));
-        saveButton = new JButton("Save");
-        saveButton.addActionListener(this);
-        editPanel.add(saveButton);
+        // buttons to choose which margin to edit
+        String[][] values = {
+                {"left", "top", "bottom"},
+                {"width", "height", ""},
+                {"x spacing", "y spacing", ""}
+        };
+        JPanel valuePanel = new JPanel(new GridLayout(values[0].length,values.length));
+        valueButtons = new JButton[values[0].length * values.length];
+        int i=0;
+        for (int row=values.length-1; row>=0; row--) {
+            for (int col=0; col<values[row].length; col++) {
+                valueButtons[i] = new JButton(values[row][col]);
+                if (!values[row][col].equals("")) {
+                    valueButtons[i].addActionListener(this);
+                } else {
+                    valueButtons[i].setEnabled(false); // disable blank buttons (which are only there for padding)
+                }
+                valuePanel.add(valueButtons[i], row, col);
+                i++;
+            }
+        }
+        southPanel.add(valuePanel, BorderLayout.WEST);
+
+        // the buttons to adjust the values themselves
+        JPanel editPanel = new JPanel(new BorderLayout());
+        plusOneButton = new JButton("+1");
+        plusOneButton.addActionListener(this);
+        plusTenButton = new JButton("+10");
+        plusTenButton.addActionListener(this);
+        minusOneButton = new JButton("-1");
+        minusOneButton.addActionListener(this);
+        minusTenButton = new JButton("-10");
+        minusTenButton.addActionListener(this);
+        valueLabel = new JLabel("0", JLabel.CENTER);
+        valueLabel.setBackground(Color.ORANGE);
+        editPanel.add(plusTenButton, BorderLayout.NORTH);
+        editPanel.add(plusOneButton, BorderLayout.EAST);
+        editPanel.add(minusOneButton, BorderLayout.WEST);
+        editPanel.add(minusTenButton, BorderLayout.SOUTH);
+        editPanel.add(valueLabel, BorderLayout.CENTER);
         southPanel.add(editPanel, BorderLayout.CENTER);
 
+        selectButton(valueButtons[6]);  // top left button because rows are added starting at the bottom
+
+        saveButton = new JButton("Save");
+        saveButton.addActionListener(this);
+        southPanel.add(saveButton, BorderLayout.EAST);
+
         setSize(new Dimension(WIDTH, HEIGHT));
-        drawSlicingGrid();
     }
 
     private void checkMatchingFiles() {
         fileMatches = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText());
         filesFound.setText(Integer.toString(fileMatches.length));
         if (fileMatches.length>0) {
-            StretchIcon newIcon = getGalleryImage();
-            if (newIcon != null) {
-                gallerySheet.setIcon(newIcon);  // update the image
+            BufferedImage newPic = getGalleryImage();
+            if (newPic != null) {
+                gallerySheet.setGalleryPic(newPic);
             }
         }
     }
 
     // display the entire gallery sheet from the PDF file
-    private StretchIcon getGalleryImage() {
-        String filename = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText())[0];
+    private BufferedImage getGalleryImage() {
+            String filename = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText())[0];
         if (filename.toUpperCase().endsWith(".PDF")) {
-            return new StretchIcon(FileHandler.readPDF(filename));
+            return FileHandler.readPDF(filename);
         } else {
-            return new StretchIcon((FileHandler.readImage(filename)));
+            return FileHandler.readImage(filename);
         }
     }
 
-    // overlay gridlines to show how the image will be sliced into individual memorisable items
-    private void drawSlicingGrid() {
-        // TODO add code here
+    private void selectButton(JButton selected) {
+        // unselect all buttons 1st
+        for (JButton b: valueButtons) {
+            b.setBackground(null);
+        }
+        selected.setBackground(Color.red);
+        if (selected.getText().equals("left")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getLeftMargin()));
+        }
+        if (selected.getText().equals("top")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getTopMargin()));
+        }
+        if (selected.getText().equals("bottom")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getBottomMargin()));
+        }
+        if (selected.getText().equals("width")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getSinglePicWidth()));
+        }
+        if (selected.getText().equals("height")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getSinglePicHeight()));
+        }
+        if (selected.getText().equals("x spacing")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getHSpacing()));
+        }
+        if (selected.getText().equals("y spacing")) {
+            valueLabel.setText(Integer.toString(gallerySheet.getVSpacing()));
+        }
+
     }
 
     @Override
@@ -130,6 +205,67 @@ public class ImportGUI extends JFrame implements ActionListener {
         if (e.getSource() == saveButton) {
             settings.setString("GALLERY_FOLDER", filepathField.getText());
             settings.setString("GALLERY_FILE_WILDCARD", wildcardField.getText());
+            settings.setString("GALLERY_LEFT_MARGIN", Integer.toString(gallerySheet.getLeftMargin()));
+            settings.setString("GALLERY_TOP_MARGIN", Integer.toString(gallerySheet.getTopMargin()));
+            settings.setString("GALLERY_BOTTOM_MARGIN", Integer.toString(gallerySheet.getBottomMargin()));
+            settings.setString("GALLERY_IMAGE_WIDTH", Integer.toString(gallerySheet.getSinglePicWidth()));
+            settings.setString("GALLERY_IMAGE_HEIGHT", Integer.toString(gallerySheet.getSinglePicHeight()));
+            settings.setString("GALLERY_H_SPACING", Integer.toString(gallerySheet.getHSpacing()));
+            settings.setString("GALLERY_V_SPACING", Integer.toString(gallerySheet.getVSpacing()));
+            settings.save();
+        }
+        // check if we pressed one of the value buttons
+        for (JButton b: valueButtons) {
+            if (e.getSource()==b) {
+                selectButton(b);
+            }
+        }
+
+        // handle the buttons to increase/decrease the value
+        int valueChange = 0;
+        if (e.getSource()==plusOneButton) {
+            valueChange = 1;
+        }
+        if (e.getSource()==plusTenButton) {
+            valueChange = 10;
+        }
+        if (e.getSource()==minusTenButton) {
+            valueChange = -10;
+        }
+        if (e.getSource()==minusOneButton) {
+            valueChange = -1;
+        }
+        if (valueChange != 0) {
+            if (valueButtons[0].getBackground()==Color.red) {
+                gallerySheet.changeHSpacing(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getHSpacing()));
+            }
+            if (valueButtons[1].getBackground()==Color.red) {
+                gallerySheet.changeVSpacing(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getVSpacing()));
+            }
+            if (valueButtons[3].getBackground()==Color.red) {
+                gallerySheet.changeSinglePicWidth(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getSinglePicWidth()));
+            }
+            if (valueButtons[4].getBackground()==Color.red) {
+                gallerySheet.changeSinglePicHeight(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getHSpacing()));
+            }
+            if (valueButtons[6].getBackground()==Color.red) {
+                gallerySheet.changeLeftMargin(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getLeftMargin()));
+            }
+            if (valueButtons[7].getBackground()==Color.red) {
+                gallerySheet.changeTopMargin(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getTopMargin()));
+            }
+            if (valueButtons[8].getBackground()==Color.red) {
+                gallerySheet.changeBottomMargin(valueChange);
+                valueLabel.setText(Integer.toString(gallerySheet.getBottomMargin()));
+            }
+            repaint();
         }
     }
+
 }
