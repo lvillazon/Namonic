@@ -90,6 +90,9 @@ public class GalleryPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        if (galleryPic == null) {
+            return;  // bail on the rest, since there is no image to draw
+        }
         // calculate new image size based on the size of the container panel
         // while preserving the original aspect ratio
         int newWidth;
@@ -123,27 +126,27 @@ public class GalleryPanel extends JPanel {
                     null);
 
             // paint grid lines on top
-            int scaledLeftMargin = (int)(leftMargin * scaling);
-            int scaledTopMargin = (int)(topMargin * scaling);
-            int scaledBottomMargin = (int)(bottomMargin * scaling);
-            int scaledWidth = (int)(singlePicWidth * scaling);
-            int scaledHeight = (int)(singlePicHeight * scaling);
-            int scaledHSpacing = (int)(hSpacing * scaling);
-            int scaledVSpacing = (int)(vSpacing * scaling);
+            double scaledLeftMargin = leftMargin * scaling;
+            double scaledTopMargin = topMargin * scaling;
+            double scaledBottomMargin = bottomMargin * scaling;
+            double scaledWidth = singlePicWidth * scaling;
+            double scaledHeight = singlePicHeight * scaling;
+            double scaledHSpacing = hSpacing * scaling;
+            double scaledVSpacing = vSpacing * scaling;
             g2.setColor(Color.red);
             // page margins
-            g2.drawLine(scaledLeftMargin,0, scaledLeftMargin, getHeight());
-            g2.drawLine(0, scaledTopMargin, getWidth(), scaledTopMargin);
+            g2.drawLine((int)scaledLeftMargin,0, (int)scaledLeftMargin, getHeight());
+            g2.drawLine(0, (int)scaledTopMargin, getWidth(), (int)scaledTopMargin);
             g2.drawLine(
-                    0, scaled.getHeight()-scaledBottomMargin,
-                    getWidth(), scaled.getHeight()-scaledBottomMargin);
+                    0, scaled.getHeight()-(int)scaledBottomMargin,
+                    getWidth(), scaled.getHeight()-(int)scaledBottomMargin);
 
             // bounding box around individual pics
-            int y = scaledTopMargin;
+            double y = scaledTopMargin;
             while (y<scaled.getHeight() - scaledBottomMargin - scaledHeight) {
-                int x = scaledLeftMargin;
+                double x = scaledLeftMargin;
                 while (x<scaled.getWidth()-scaledWidth) {
-                    g2.drawRect(x, y, scaledWidth, scaledHeight);
+                    g2.drawRect((int)x, (int)y, (int)scaledWidth, (int)scaledHeight);
                     x = x + scaledWidth + scaledHSpacing;
                 }
                 y = y + scaledHeight + scaledVSpacing;
