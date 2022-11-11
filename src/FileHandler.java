@@ -31,14 +31,17 @@ public class FileHandler {
         return results;
     }
 
-    public static BufferedImage readPDF(String filename) {
+    public static BufferedImage[] readPDF(String filename) {
         try {
             // load PDF
             File file = new File(filename);
             PDDocument document = PDDocument.load(file);
             PDFRenderer renderer = new PDFRenderer(document);
-            BufferedImage pdfImage = renderer.renderImage(0);  //TODO try other pages
-            return pdfImage;
+            BufferedImage[] pdfPages = new BufferedImage[document.getNumberOfPages()];
+            for (int i=0; i< pdfPages.length; i++) {
+                pdfPages[i] = renderer.renderImage(i);
+            }
+            return pdfPages;
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage() + "  " + filename);
             return null;
@@ -54,11 +57,13 @@ public class FileHandler {
             return null;
         }
     }
-    public static BufferedImage readImage(String filename) {
+    public static BufferedImage[] readImages(String filename) {
         if (filename.toUpperCase().endsWith(".PDF")) {
             return readPDF(filename);
         } else {
-            return readNormalImage(filename);
+            BufferedImage[] singleElementArray = new BufferedImage[1];
+            singleElementArray[0] = readNormalImage(filename);
+            return singleElementArray;
         }
     }
 

@@ -17,5 +17,14 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="pdfbox-app-2.0.27" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/pdfbox-app-2.0.27.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

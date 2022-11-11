@@ -86,23 +86,27 @@ public class ResourceManager {
         if (galleryFiles.length > 0) {
             for (String filename : galleryFiles) {
                 try {
-                    BufferedImage galleryImage = FileHandler.readImage(filename);
-                    int y = topMargin;
+                    BufferedImage[] galleryImages = FileHandler.readImages(filename);
+
                     int count = 0;
-                    while (y + height < galleryImage.getHeight() - bottomMargin) {
-                        int x = leftMargin;
-                        while (x + width < galleryImage.getWidth()) {
-                            ImageIcon icon = new ImageIcon(galleryImage.getSubimage(x, y, width, height));
-                            // scale it to a suitable size
-                            Image scaled = icon.getImage().getScaledInstance(
-                                    settings.getInt("DISPLAY_IMAGE_WIDTH"),
-                                    settings.getInt("DISPLAY_IMAGE_HEIGHT"),
-                                    Image.SCALE_SMOOTH);
-                            images.add(new ImageIcon(scaled));
-                            count++;
-                            x = x + width + hSpacing;
+                    for (int page=0; page<galleryImages.length; page++) {
+                        int y = topMargin;
+                        while (y + height < galleryImages[page].getHeight() - bottomMargin) {
+                            int x = leftMargin;
+                            while (x + width < galleryImages[page].getWidth()) {
+                                ImageIcon icon = new ImageIcon(galleryImages[page].getSubimage(x, y, width, height));
+                                // scale it to a suitable size
+                                Image scaled = icon.getImage().getScaledInstance(
+                                        settings.getInt("DISPLAY_IMAGE_WIDTH"),
+                                        settings.getInt("DISPLAY_IMAGE_HEIGHT"),
+                                        Image.SCALE_SMOOTH);
+                                System.out.println("Pic"+count+": "+isBlank((BufferedImage)scaled));
+                                images.add(new ImageIcon(scaled));
+                                count++;
+                                x = x + width + hSpacing;
+                            }
+                            y = y + height + vSpacing;
                         }
-                        y = y + height + vSpacing;
                     }
                     System.out.println(count + " from " + filename);
                 } catch (Exception e) {
@@ -111,5 +115,18 @@ public class ResourceManager {
             }
         }
         return images;
+    }
+
+    // returns true if the image contains pixels all the same colour
+    public static boolean isBlank(BufferedImage img) {
+        int colour = img.getRGB(0,0);
+        for (int x=0; x<img.getWidth(); x++) {
+            for (int y=0; y< img.getHeight(); y++) {
+                if (img.getRGB(x,y) != colour) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

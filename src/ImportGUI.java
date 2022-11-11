@@ -17,6 +17,8 @@ public class ImportGUI extends JFrame implements ActionListener {
     private final JButton plusTenButton;
     private final JButton minusOneButton;
     private final JButton minusTenButton;
+    private final JButton prevPageButton;
+    private final JButton nextPageButton;
     private final JLabel valueLabel;
     private final Config settings;
     private String[] fileMatches;
@@ -119,6 +121,15 @@ public class ImportGUI extends JFrame implements ActionListener {
         southPanel.add(valuePanel, BorderLayout.WEST);
 
         // the buttons to adjust the values themselves
+        JPanel pageControlPanel = new JPanel(new BorderLayout());
+        prevPageButton = new JButton("<<");
+        nextPageButton = new JButton(">>");
+        prevPageButton.addActionListener(this);
+        nextPageButton.addActionListener(this);
+        pageControlPanel.add(prevPageButton, BorderLayout.WEST);
+        pageControlPanel.add(nextPageButton, BorderLayout.EAST);
+        southPanel.add(pageControlPanel, BorderLayout.CENTER);
+
         JPanel editPanel = new JPanel(new BorderLayout());
         plusOneButton = new JButton("+1");
         plusOneButton.addActionListener(this);
@@ -135,7 +146,7 @@ public class ImportGUI extends JFrame implements ActionListener {
         editPanel.add(minusOneButton, BorderLayout.WEST);
         editPanel.add(minusTenButton, BorderLayout.SOUTH);
         editPanel.add(valueLabel, BorderLayout.CENTER);
-        southPanel.add(editPanel, BorderLayout.CENTER);
+        pageControlPanel.add(editPanel, BorderLayout.SOUTH);
 
         selectButton(valueButtons[6]);  // top left button because rows are added starting at the bottom
 
@@ -150,20 +161,20 @@ public class ImportGUI extends JFrame implements ActionListener {
         fileMatches = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText());
         filesFound.setText(Integer.toString(fileMatches.length));
         if (fileMatches.length>0) {
-            BufferedImage newPic = getGalleryImage();
-            if (newPic != null) {
-                gallerySheet.setGalleryPic(newPic);
+            BufferedImage[] newPics = getGalleryImages();
+            if (newPics != null) {
+                gallerySheet.setGalleryPics(newPics);
             }
         }
     }
 
     // display the entire gallery sheet from the PDF file
-    private BufferedImage getGalleryImage() {
+    private BufferedImage[] getGalleryImages() {
             String filename = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText())[0];
         if (filename.toUpperCase().endsWith(".PDF")) {
             return FileHandler.readPDF(filename);
         } else {
-            return FileHandler.readImage(filename);
+            return FileHandler.readImages(filename);
         }
     }
 
@@ -264,8 +275,16 @@ public class ImportGUI extends JFrame implements ActionListener {
                 gallerySheet.changeBottomMargin(valueChange);
                 valueLabel.setText(Integer.toString(gallerySheet.getBottomMargin()));
             }
-            repaint();
+
         }
+        // switch gallery page
+        if (e.getSource() == prevPageButton) {
+            gallerySheet.previousPage();
+        }
+        if (e.getSource() == nextPageButton) {
+            gallerySheet.nextPage();
+        }
+        repaint();
     }
 
 }

@@ -5,7 +5,7 @@ import java.awt.image.BufferedImage;
 // shows the gallery images, together with the lines indicating how they will be sliced
 // into individual images for memorising
 public class GalleryPanel extends JPanel {
-    private BufferedImage galleryPic;
+    private BufferedImage[] galleryPics;
     private double aspectRatio;
     private int leftMargin;
     private int topMargin;
@@ -14,6 +14,7 @@ public class GalleryPanel extends JPanel {
     private int vSpacing;
     private int singlePicWidth;
     private int singlePicHeight;
+    private int pageNumber;
 
     public GalleryPanel(int leftMargin, int topMargin, int bottomMargin, int hSpacing, int vSpacing, int width, int height) {
         super();
@@ -24,11 +25,12 @@ public class GalleryPanel extends JPanel {
         this.vSpacing = vSpacing;
         this.singlePicWidth = width;
         this.singlePicHeight = height;
+        pageNumber = 0;
     }
 
-    public void setGalleryPic(BufferedImage img) {
-        galleryPic = img;
-        aspectRatio = (float)img.getWidth()/(float)img.getHeight();
+    public void setGalleryPics(BufferedImage[] imgs) {
+        galleryPics = imgs;
+        aspectRatio = (float)imgs[0].getWidth()/(float)imgs[0].getHeight();
     }
 
     public int getLeftMargin() {
@@ -87,10 +89,22 @@ public class GalleryPanel extends JPanel {
         singlePicHeight += delta;
     }
 
+    public void nextPage() {
+        if (pageNumber<galleryPics.length-1) {
+            pageNumber++;
+        }
+    }
+
+    public void previousPage() {
+        if (pageNumber>0) {
+            pageNumber--;
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (galleryPic == null) {
+        if (galleryPics == null) {
             return;  // bail on the rest, since there is no image to draw
         }
         // calculate new image size based on the size of the container panel
@@ -112,17 +126,18 @@ public class GalleryPanel extends JPanel {
             newWidth = getWidth();
             newHeight = (int) (newWidth / aspectRatio);
         }
-        double scaling = (float)newWidth/galleryPic.getWidth();
+        double scaling = (float)newWidth/galleryPics[0].getWidth();
 
         if (newWidth > 0 && newHeight > 0) {
-            BufferedImage scaled = new BufferedImage(newWidth, newHeight, galleryPic.getType());
+            BufferedImage scaled = new BufferedImage(newWidth, newHeight, galleryPics[0].getType());
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
             g2.drawImage(
-                    galleryPic,
+                    galleryPics[pageNumber],
                     0, 0, newWidth, newHeight,
-                    0, 0, galleryPic.getWidth(), galleryPic.getHeight(),
+                    0, 0,
+                    galleryPics[pageNumber].getWidth(), galleryPics[pageNumber].getHeight(),
                     null);
 
             // paint grid lines on top
@@ -143,13 +158,23 @@ public class GalleryPanel extends JPanel {
 
             // bounding box around individual pics
             double y = scaledTopMargin;
+            int unscaledY = topMargin;
             while (y<scaled.getHeight() - scaledBottomMargin - scaledHeight) {
                 double x = scaledLeftMargin;
+                int unscaledX = leftMargin;
                 while (x<scaled.getWidth()-scaledWidth) {
-                    g2.drawRect((int)x, (int)y, (int)scaledWidth, (int)scaledHeight);
+                    // check if this individual pic is blank
+                    BufferedImage checkImg = galleryPics[pageNumber].getSubimage(
+                            (int)unscaledX, (int)unscaledY,
+                            (int)singlePicWidth, (int)singlePicHeight);
+                    if (!ResourceManager.isBlank(checkImg)) {
+                        g2.drawRect((int) x, (int) y, (int) scaledWidth, (int) scaledHeight);
+                    }
                     x = x + scaledWidth + scaledHSpacing;
+                    unscaledX = unscaledX + singlePicWidth + hSpacing;
                 }
                 y = y + scaledHeight + scaledVSpacing;
+                unscaledY = unscaledY + singlePicHeight + vSpacing;
             }
             g2.dispose();
         }
