@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 public class ImportGUI extends JFrame implements ActionListener {
 
@@ -83,7 +84,19 @@ public class ImportGUI extends JFrame implements ActionListener {
         wildcardPanel.add(filesFound);
         northPanel.add(wildcardPanel, BorderLayout.CENTER);
 
-        // the panel that actually shows the gallery image
+        // the panels that actually shows the gallery images
+        // we create 1 per page in the PDF and display them side-by-side
+
+        //TODO
+        /*
+        Create a JPanel to hold multiple gallery sheets - use flow layout so they extend sideways
+        The << and >> buttons now step through the files that match the wildcard
+        For each file we load each page of the PDF into a separate galleryPanel object
+        This will require a method to return the number of pages in the PDF
+         */
+
+
+        gallerySheet =
         gallerySheet = new GalleryPanel(
                 settings.getInt("GALLERY_LEFT_MARGIN"),
                 settings.getInt("GALLERY_TOP_MARGIN"),
@@ -168,14 +181,26 @@ public class ImportGUI extends JFrame implements ActionListener {
         }
     }
 
-    // display the entire gallery sheet from the PDF file
+    // display the entire gallery sheet from the PDF file(s)
     private BufferedImage[] getGalleryImages() {
-            String filename = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText())[0];
-        if (filename.toUpperCase().endsWith(".PDF")) {
-            return FileHandler.readPDF(filename);
-        } else {
-            return FileHandler.readImages(filename);
+
+        //TODO load all files into one ArrayList and then convert down to BufferedFile[]
+        String[] filenames = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText());
+        ArrayList<BufferedImage> allSheets = new ArrayList<>();
+        for (String file: filenames) {
+            if (file.toUpperCase().endsWith(".PDF")) {  // ignore all non PDF files
+                BufferedImage[] sheetsInOneFile = FileHandler.readPDF(file);
+                for(int i=0; i<sheetsInOneFile.length; i++) {
+                    allSheets.add(sheetsInOneFile[i]);
+                }
+            }
         }
+        // convert to array
+        BufferedImage[] resultArray = new BufferedImage[allSheets.size()];
+        for(int i=0; i<allSheets.size(); i++) {
+            resultArray[i] = allSheets.get(i);
+        }
+        return resultArray;
     }
 
     private void selectButton(JButton selected) {

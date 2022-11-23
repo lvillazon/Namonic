@@ -32,10 +32,11 @@ public class FileHandler {
     }
 
     public static BufferedImage[] readPDF(String filename) {
+        PDDocument document = null;
         try {
             // load PDF
             File file = new File(filename);
-            PDDocument document = PDDocument.load(file);
+            document = PDDocument.load(file);
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage[] pdfPages = new BufferedImage[document.getNumberOfPages()];
             for (int i=0; i< pdfPages.length; i++) {
@@ -45,6 +46,14 @@ public class FileHandler {
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage() + "  " + filename);
             return null;
+        } finally {
+            if (document != null) {
+                try {
+                    document.close();
+                } catch (IOException e) {
+                    System.out.println(e.getLocalizedMessage() + "  " + filename);
+                }
+            }
         }
     }
 
