@@ -10,17 +10,25 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../ExternalLibraries/pdfbox-app-2.0.27.jar!/" />
+          <root url="jar://$MODULE_DIR$/pdfbox-app-2.0.27.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="pdfbox-app-2.0.27" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/pdfbox-app-2.0.27.jar!/" />
+          <root url="jar://$MODULE_DIR$/../json-simple/classes/artifacts/json_simple_jar/json-simple.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/commons-io-2.11.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
