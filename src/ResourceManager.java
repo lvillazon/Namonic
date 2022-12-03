@@ -117,6 +117,19 @@ public class ResourceManager {
         return images;
     }
 
+
+    // TODO OCR the class names from the top of each gallery sheet
+    /*
+    public ArrayList<String> getCategoryNames(){
+        ArrayList<String> text = new ArrayList<>();
+        for (BufferedImage sheet: getGalleryImages()) {
+            text.add(OCRClass.getStringWithOCR(sheet, null, null));
+        }
+        return text;
+    }
+
+     */
+
     // returns true if the image contains pixels all the same colour
     public static boolean isBlank(BufferedImage img) {
         int colour = img.getRGB(0,0);

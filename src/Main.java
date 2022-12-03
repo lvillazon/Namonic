@@ -5,7 +5,6 @@ public class Main {
 
     public static void main(String[] args) {
         Config settings = new Config("namonic.cfg");
-        Memoriser students = new Memoriser(settings);
-        GUI mainGUI = new GUI(settings, students); // size of window
+        new Memoriser(settings);
     }
 }

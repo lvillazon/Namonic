@@ -160,10 +160,6 @@ public class GUI extends JFrame implements ActionListener {
             setItem(currentItem);
             updateCategoryScores();
             setVisible(true);
-        } else {
-            // no data loaded, so show the import window
-            ImportGUI importing = new ImportGUI(settings);
-            importing.setVisible(true);
         }
     }
 

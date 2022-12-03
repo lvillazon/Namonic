@@ -23,9 +23,11 @@ public class ImportGUI extends JFrame implements ActionListener {
     private final JLabel valueLabel;
     private final Config settings;
     private String[] fileMatches;
+    private CallBack finaliseFunction;
 
-    public ImportGUI(Config settings) {
+    public ImportGUI(Config settings, CallBack finalise) {
         super("Import Gallery Images");
+        finaliseFunction = finalise;
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.settings = settings;
         addWindowListener(new WindowAdapter() {
@@ -181,10 +183,8 @@ public class ImportGUI extends JFrame implements ActionListener {
         }
     }
 
-    // display the entire gallery sheet from the PDF file(s)
+    // grab the unsliced gallery sheets from the PDF file(s)
     private BufferedImage[] getGalleryImages() {
-
-        //TODO load all files into one ArrayList and then convert down to BufferedFile[]
         String[] filenames = FileHandler.getMatchingFiles(filepathField.getText(), wildcardField.getText());
         ArrayList<BufferedImage> allSheets = new ArrayList<>();
         for (String file: filenames) {
@@ -249,6 +249,7 @@ public class ImportGUI extends JFrame implements ActionListener {
             settings.setString("GALLERY_H_SPACING", Integer.toString(gallerySheet.getHSpacing()));
             settings.setString("GALLERY_V_SPACING", Integer.toString(gallerySheet.getVSpacing()));
             settings.save();
+            finaliseFunction.trigger();
         }
         // check if we pressed one of the value buttons
         for (JButton b: valueButtons) {

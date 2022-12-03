@@ -12,11 +12,37 @@ public class Memoriser {
     private Random rng;
     private int streak;
     private Config settings;
+    private ImportGUI studentDataImporter;
+    private GUI memoryTestUI;
+
+    private class CallBackHandler implements CallBack {
+        public void trigger() {
+            System.out.println("callback triggered");
+            finaliseData();
+        }
+    }
 
     public Memoriser(Config settings) {
         this.settings = settings;
-        ArrayList<ImageIcon> pictures = ResourceManager.loadImages(settings);
         allItems = ResourceManager.loadItemData(settings);
+        if (allItems.size() > 0) { // images & names were previously imported
+            // finalise any book-keeping
+        } else {
+            // show the import dialog to allow the raw PDFs from SIMs to be imported
+            studentDataImporter = new ImportGUI(settings, new CallBackHandler());
+            studentDataImporter.setVisible(true);
+        }
+    }
+
+    private void finaliseData() {
+        System.out.println("data found...");
+        ArrayList<ImageIcon> data = ResourceManager.loadImages(settings);
+        System.out.println(data.size() + " images");
+    }
+
+    /*
+    private void initialiseData(ArrayList<ImageIcon> itemImages) {
+        // take the chopped thumbnails and extracts the names & catego
         metadataNames = settings.getString("ITEM_META").split(",");
         categoryList = settings.getString("NAME_CATEGORIES").split(",");
         categoryIncluded = new boolean[categoryList.length];
@@ -43,6 +69,8 @@ public class Memoriser {
         rng = new Random();  // used for all random choices
         streak = 0;
     }
+
+     */
 
     public Item getItem(int i) {
         return allItems.get(i);
