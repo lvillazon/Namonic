@@ -27,6 +27,7 @@ public class Memoriser {
         allItems = ResourceManager.loadItemData(settings);
         if (allItems.size() > 0) { // images & names were previously imported
             // finalise any book-keeping
+            memoryTestUI = new GUI(settings, this);
         } else {
             // show the import dialog to allow the raw PDFs from SIMs to be imported
             studentDataImporter = new ImportGUI(settings, new CallBackHandler());
@@ -38,6 +39,7 @@ public class Memoriser {
         System.out.println("data found...");
         ArrayList<ImageIcon> data = ResourceManager.loadImages(settings);
         System.out.println(data.size() + " images");
+        memoryTestUI = new GUI(settings, this);
     }
 
     /*

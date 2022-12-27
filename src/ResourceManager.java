@@ -100,15 +100,16 @@ public class ResourceManager {
                                         settings.getInt("DISPLAY_IMAGE_WIDTH"),
                                         settings.getInt("DISPLAY_IMAGE_HEIGHT"),
                                         Image.SCALE_SMOOTH);
-                                System.out.println("Pic"+count+": "+isBlank((BufferedImage)scaled));
-                                images.add(new ImageIcon(scaled));
-                                count++;
+                                if (!isBlank(toBufferedImage(scaled))) {
+                                    images.add(new ImageIcon(scaled));
+                                    count++;
+                                }
                                 x = x + width + hSpacing;
                             }
                             y = y + height + vSpacing;
                         }
                     }
-                    System.out.println(count + " from " + filename);
+                    System.out.println(count + " images read from " + filename);
                 } catch (Exception e) {
                     System.out.println(e.getLocalizedMessage() + "  " + filename);
                 }
@@ -141,5 +142,25 @@ public class ResourceManager {
             }
         }
         return true;
+    }
+
+    // conversion routine
+    public static BufferedImage toBufferedImage(Image img)
+    {
+        if (img instanceof BufferedImage)
+        {
+            return (BufferedImage) img;
+        }
+
+        // Create a buffered image with transparency
+        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+        // Draw the image on to the buffered image
+        Graphics2D bGr = bimage.createGraphics();
+        bGr.drawImage(img, 0, 0, null);
+        bGr.dispose();
+
+        // Return the buffered image
+        return bimage;
     }
 }
