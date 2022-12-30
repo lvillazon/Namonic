@@ -1,4 +1,4 @@
-
+/*
 import org.apache.commons.io.FilenameUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -234,3 +234,5 @@ public class OCRClass {
     }
 }
 
+
+ */

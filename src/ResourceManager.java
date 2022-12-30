@@ -7,6 +7,69 @@ import java.util.ArrayList;
 
 public class ResourceManager {
 
+    public static String[] getGalleryFiles(Config settings) {
+        // look for all image gallery files that match the wildcard expression in the config file
+        String[] galleryFiles = FileHandler.getMatchingFiles(
+                settings.getString("GALLERY_FOLDER"),
+                settings.getString("GALLERY_FILE_WILDCARD"));
+        return galleryFiles;
+    }
+
+    // grab each page of a specific PDF and return as BufferedImages
+    public static BufferedImage[] loadGallery(String filepath) {
+        try {
+            BufferedImage[] galleryImages = FileHandler.readImages(filepath);
+            return galleryImages;
+        } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage() + "  " + filepath);
+            return null;
+        }
+    }
+
+    // how many rows of portrait images would fit in the gallery grid
+    public static int maxRows(Config settings, BufferedImage img) {
+        return (img.getHeight()
+                - settings.getInt("GALLERY_TOP_MARGIN")
+                - settings.getInt("GALLERY_BOTTOM_MARGIN"))
+                / (settings.getInt("GALLERY_IMAGE_HEIGHT") + settings.getInt("GALLERY_V_SPACING"));
+    }
+
+    // how many columns of portrait images would fit in the gallery grid
+    public static int maxColumns(Config settings, BufferedImage img) {
+        return (img.getWidth()
+                - settings.getInt("GALLERY_LEFT_MARGIN"))
+                / (settings.getInt("GALLERY_IMAGE_WIDTH") + settings.getInt("GALLERY_H_SPACING"));
+    }
+
+    public static BufferedImage getImageAt(Config settings, BufferedImage img, int row, int column) {
+        // size, position and spacing of the pictures in the grid imported from SIMS
+        int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
+        int bottomMargin = settings.getInt("GALLERY_BOTTOM_MARGIN");
+        int leftMargin = settings.getInt("GALLERY_LEFT_MARGIN");
+        int hSpacing = settings.getInt("GALLERY_H_SPACING");
+        int vSpacing = settings.getInt("GALLERY_V_SPACING");
+        int width = settings.getInt("GALLERY_IMAGE_WIDTH");
+        int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
+
+        int y = topMargin + row * (height + vSpacing);
+        int x = leftMargin + column * (width * hSpacing);
+        BufferedImage subImage = img.getSubimage(x, y, width, height);
+        // scale it to a suitable size
+        Image scaled = subImage.getScaledInstance(
+                                        settings.getInt("DISPLAY_IMAGE_WIDTH"),
+                                        settings.getInt("DISPLAY_IMAGE_HEIGHT"),
+                                        Image.SCALE_SMOOTH);
+        /*
+                                if (!isBlank(toBufferedImage(scaled))) {
+                                    images.add(new ImageIcon(scaled));
+                                    count++;
+                                }
+
+         */
+        return toBufferedImage(scaled);
+    }
+
+
     public static ArrayList<Item> loadItemData(Config settings) {
         ArrayList<String> rawData = FileHandler.readWholeFile(settings.getString("NAME_FILE"));
         ArrayList<Item> results = new ArrayList<>();
@@ -87,7 +150,10 @@ public class ResourceManager {
             for (String filename : galleryFiles) {
                 try {
                     BufferedImage[] galleryImages = FileHandler.readImages(filename);
-
+                    String[] text = OCR.readTextFromImage(galleryImages[0]);
+                    for(String s:text) {
+                        System.out.println(s);
+                    }
                     int count = 0;
                     for (int page=0; page<galleryImages.length; page++) {
                         int y = topMargin;
@@ -131,11 +197,18 @@ public class ResourceManager {
 
      */
 
-    // returns true if the image contains pixels all the same colour
+    // checks for an empty image by scanning a 10 x 10 grid of pixels
+    // in the middle of the image. If they are all the same colour, we assume the image is blank
+    // since these are student portraits against a white background
+    // the central pixels should contain face, and therefore will be a variety of different colours
+    // This method is somewhat tolerant of cropping glitches, where a small amount of image from an
+    // adjacent pic is included at one edge
     public static boolean isBlank(BufferedImage img) {
-        int colour = img.getRGB(0,0);
-        for (int x=0; x<img.getWidth(); x++) {
-            for (int y=0; y< img.getHeight(); y++) {
+        int middleX = img.getWidth()/2;
+        int middleY = img.getHeight()/2;
+        int colour = img.getRGB(middleX, middleY);
+        for (int x=middleX-5; x<middleX+5; x++) {
+            for (int y=middleY-5; y<middleY+5; y++) {
                 if (img.getRGB(x,y) != colour) {
                     return false;
                 }

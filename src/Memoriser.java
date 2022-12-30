@@ -1,13 +1,17 @@
 import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 public class Memoriser {
     private ArrayList<Item> allItems;
     private ArrayList<Item> filteredItems;
+    private ArrayList<TeachingClass> allClasses;
     private String[] metadataNames;  // titles of item metadata, eg "Gender", "PP"
-    private String[] categoryList;  // titles of item categories, eg "Year 7", "Year 8"
+    private ArrayList<String> categoryList;  // titles of item categories, eg "Year 7", "Year 8"
     private boolean[] categoryIncluded;  // whether or not this category is included in random choices of items
     private Random rng;
     private int streak;
@@ -24,6 +28,31 @@ public class Memoriser {
 
     public Memoriser(Config settings) {
         this.settings = settings;
+        // look for PDF files exported from SIMS for each class
+        String[] galleryFiles = ResourceManager.getGalleryFiles(settings);
+        if (galleryFiles.length == 0) {
+            // TODO show config frame so we can point to the gallery files
+        } else {
+            // use the names of each file to create category names
+            // create a teachingClass object for each one
+            allClasses = new ArrayList<>();
+            categoryList = new ArrayList<>();
+            for (String filePath: galleryFiles) {
+                TeachingClass teach = new TeachingClass(settings, filePath);
+                allClasses.add(teach);
+                System.out.println("class " + teach.getName() + " created with " + teach.size() + " students");
+                // assign each class to a separate category for now
+                categoryList.add(teach.getName());
+                categoryIncluded = new boolean[categoryList.size()];
+                for (int i=0; i<categoryIncluded.length; i++) {  // initialise with all cats selected
+                    categoryIncluded[i] = true;
+                }            }
+            // show the main UI to play the memory game
+            memoryTestUI = new GUI(settings, this);
+        }
+    }
+
+    /*    LEFTOVER STUFF FROM THE OLD CONSTRUCTOR
         allItems = ResourceManager.loadItemData(settings);
         if (allItems.size() > 0) { // images & names were previously imported
             // finalise any book-keeping
@@ -34,6 +63,8 @@ public class Memoriser {
             studentDataImporter.setVisible(true);
         }
     }
+
+     */
 
     private void finaliseData() {
         System.out.println("data found...");
@@ -95,15 +126,15 @@ public class Memoriser {
     }
 
     public String getCategoryName(int i) {
-        if (i<categoryList.length) {
-            return categoryList[i];
+        if (i<categoryList.size()) {
+            return categoryList.get(i);
         } else {
             return "";
         }
     }
 
     public int getCategoryCount() {
-        return categoryList.length;
+        return categoryList.size();
     }
 
     public boolean isCategoryIncluded(int i) {
@@ -113,8 +144,8 @@ public class Memoriser {
     // does the same as the above but uses the category name string , instead of its index number
     public boolean isCategoryIncluded(String categoryName) {
         int catNumber = -1;
-        for (int i=0; i<categoryList.length; i++) {
-            if (categoryList[i].equals(categoryName)) {
+        for (int i=0; i<categoryList.size(); i++) {
+            if (categoryList.get(i).equals(categoryName)) {
                 catNumber = i;
             }
         }
@@ -179,8 +210,8 @@ public class Memoriser {
             int i = -1;
             while (!ok) {
                 i = rng.nextInt(allItems.size() - 1);
-                for (int j = 0; j < categoryList.length; j++) {
-                    if (categoryIncluded[j] && allItems.get(i).getCategory().equals(categoryList[j])) {
+                for (int j = 0; j < categoryList.size(); j++) {
+                    if (categoryIncluded[j] && allItems.get(i).getCategory().equals(categoryList.get(j))) {
                         ok = true;
                     }
                 }
