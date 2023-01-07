@@ -41,11 +41,26 @@ public class Config {
         }
     }
 
-    public String getString(String k) {
+    public String formatSection(String section) {
+        return "["+section+"]";
+    }
+
+    // return true if a key with the name exists
+    public boolean keyExists(String s, String k) {
         String key = k.toUpperCase();  // keys are always stored in upper case
-        // check all section dictionaries for the 1st matching key
+        return (dictionaries.containsKey(formatSection(s)) && dictionaries.get(formatSection(s)).containsKey(key));
+    }
+
+    public String getStringFrom(String section, String key) {
+        String k = key.toUpperCase();  // keys are always stored in upper case
+        return dictionaries.get(formatSection(section)).get(k);
+    }
+
+    // check all section dictionaries for the 1st matching key
+    public String getString(String key) {
+        String k = key.toUpperCase();  // keys are always stored in upper case
         for (String d: dictionaries.keySet()) {
-            if (dictionaries.get(d).containsKey(key)) {
+            if (dictionaries.get(d).containsKey(k)) {
                 String value = dictionaries.get(d).get(key);
                 return value;  // scruffy early return but the alternatives all seem messier
             }

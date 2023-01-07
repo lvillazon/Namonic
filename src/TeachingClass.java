@@ -22,6 +22,7 @@ public class TeachingClass {
 
         // create a student object for each face in the gallery
         students = new ArrayList<>();
+        int id=0;
         for (BufferedImage page: galleryPics) {
             int maxRows = ResourceManager.maxRows(settings, page);
             int maxCols = ResourceManager.maxColumns(settings, page);
@@ -29,7 +30,9 @@ public class TeachingClass {
                 for (int col=0; col<maxCols; col++) {
                     BufferedImage pic = ResourceManager.getImageAt(settings, page, row, col);
                     if (!ResourceManager.isBlank(pic)) {
-                        students.add(new Student(row, col));
+                        BufferedImage namePlate = ResourceManager.getNameplateAt(settings, page, row, col);
+                        students.add(new Student(id, pic, namePlate));
+                        id++;
                     }
                 }
             }
@@ -43,4 +46,25 @@ public class TeachingClass {
     public int size() {
         return students.size();
     }
+
+    // return a student by index number
+    public Student getStudent(int i) {
+        return students.get(i);
+    }
+
+    // percentage correct over all sessions, rounded to int
+    public int classScore() {
+        int totalScore = 0;
+        int totalShown = 0;
+        for (int i=0; i<size(); i++) {
+            totalScore += getStudent(i).getCorrectCount();
+            totalShown += getStudent(i).getShowCount();
+        }
+        if (totalShown>0) {
+            return (int) ((double)totalScore / (double)totalShown * 100);
+        } else {
+            return 0;
+        }
+    }
+
 }

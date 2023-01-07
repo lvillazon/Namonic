@@ -33,6 +33,7 @@ public class FileHandler {
 
     public static BufferedImage[] readPDF(String filename) {
         PDDocument document = null;
+        int scale = 1; // TODO increase to 2 or more to improve text resolution
         try {
             // load PDF
             File file = new File(filename);
@@ -40,7 +41,7 @@ public class FileHandler {
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage[] pdfPages = new BufferedImage[document.getNumberOfPages()];
             for (int i=0; i< pdfPages.length; i++) {
-                pdfPages[i] = renderer.renderImage(i);
+                pdfPages[i] = renderer.renderImage(i, scale);
             }
             return pdfPages;
         } catch (Exception e) {

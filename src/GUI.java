@@ -12,7 +12,7 @@ public class GUI extends JFrame implements ActionListener {
     private final JLabel scoreLabel;
     private final JLabel streakLabel;
     private final JLabel correctLabel;
-    private final JButton[] choices;
+    private final JButton[] choiceButtons;
     private final JLabel[] categoryScores;
     private final JCheckBox[] filters;
     private final JButton filterAllButton;
@@ -27,7 +27,7 @@ public class GUI extends JFrame implements ActionListener {
     private final Memoriser itemData;
     private final Config settings;
     private int itemIndex;
-    private Item currentItem;
+    private Student currentStudent;
 
     public GUI(Config settings, Memoriser mem) {
         super("Namonic");
@@ -72,14 +72,14 @@ public class GUI extends JFrame implements ActionListener {
         choiceLayout.setHgap(MARGIN/2);
         choiceLayout.setVgap(MARGIN/2);
         choicePanel.setLayout(choiceLayout);
-        choices = new JButton[MAX_CHOICES];
+        choiceButtons = new JButton[MAX_CHOICES];
         for (int i=0; i<MAX_CHOICES; i++) {
-            choices[i] = new JButton("choice "+(i+1));
-            choices[i].setPreferredSize(new Dimension(150,40));
-            choices[i].setSize(new Dimension(150,40));
-            choices[i].setAlignmentX(Component.CENTER_ALIGNMENT);
-            choices[i].addActionListener(this);
-            choicePanel.add(choices[i]);
+            choiceButtons[i] = new JButton(); //"choice "+(i+1));
+            choiceButtons[i].setPreferredSize(new Dimension(200,50));
+            choiceButtons[i].setSize(new Dimension(150,40));
+            choiceButtons[i].setAlignmentX(Component.CENTER_ALIGNMENT);
+            choiceButtons[i].addActionListener(this);
+            choicePanel.add(choiceButtons[i]);
         }
         // DEBUG name, category & metadata labels, just so I can check the file is read correctly
         /*
@@ -155,9 +155,9 @@ public class GUI extends JFrame implements ActionListener {
 
         if (itemData.getTotalItems() >0) {
             // load initial item data
-            currentItem = itemData.chooseRandomly();
+            currentStudent = itemData.chooseRandomly();
             //currentItem = itemData.getItem(20);
-            setItem(currentItem);
+            setStudent(currentStudent);
             updateCategoryScores();
             setVisible(true);
         }
@@ -194,7 +194,7 @@ public class GUI extends JFrame implements ActionListener {
 
             // check if we clicked a choice button
             boolean choiceClicked = false;
-            for(JButton b: choices) {
+            for(JButton b: choiceButtons) {
                 if (e.getSource()==b) {
                     choiceClicked = true;
                 }
@@ -202,29 +202,30 @@ public class GUI extends JFrame implements ActionListener {
             // check if we chose the right name
             if (choiceClicked) {
                 // whether or not we are right, highlight the correct choice
-                JButton correctChoice = null;
-                for (JButton b: choices) {
-                    if (b.getText().equals(currentItem.getName())) {
+                JButton correctChoice = choiceButtons[0];
+                for (JButton b: choiceButtons) {
+                    if (b.getIcon() == currentStudent.getNameplate()) {
                         correctChoice = b;
                     }
                 }
                 correctChoice.setBackground(Color.green);
                 System.out.println(correctChoice.getText());
                 repaint();
-                if (e.getActionCommand().equals(currentItem.getName())) {
+                if (e.getSource() ==correctChoice) {
                     correctLabel.setText("✔");
                     correctLabel.setForeground(Color.green);
-                    itemData.markCorrect(currentItem);
-                    currentItem.markShown();
+                    itemData.markCorrect(currentStudent);
+                    currentStudent.markShown();
                     answerDelay.setInitialDelay(settings.getInt("RIGHT_DELAY"));
                     answerDelay.start();
                 } else {
                     correctLabel.setText("❌");
                     correctLabel.setForeground(Color.red);
-                    itemData.markWrong(currentItem);
+                    itemData.markWrong(currentStudent);
                     answerDelay.setInitialDelay(settings.getInt("WRONG_DELAY"));
                     answerDelay.start();
                 }
+
                 updateCategoryScores();
             }
         }
@@ -233,29 +234,31 @@ public class GUI extends JFrame implements ActionListener {
     private void updateCategoryScores() {
         // update category scores
         for (int i=0; i<categoryScores.length; i++) {
-            categoryScores[i].setText(itemData.getCategoryScore(filters[i].getText()) + "%");
+            // TODO fix this
+//            categoryScores[i].setText(itemData.getCategoryScore(filters[i].getText()) + "%");
         }
     }
 
     private void nextQuestion() {
         // reset all buttons to default appearance
-        for (JButton b: choices) {
+        for (JButton b: choiceButtons) {
             b.setBackground(null);
         }
         correctLabel.setText("");
-        currentItem = itemData.chooseWorstRemembered();
-        setItem(currentItem);
+        currentStudent = itemData.chooseWorstRemembered();
+        setStudent(currentStudent);
     }
 
     // update all widgets to reflect the current item
-    private void setItem(Item i) {
-        if (i != null) {
-            faceLabel.setIcon(i.getPicture());
+    private void setStudent(Student s) {
+        if (s != null) {
+            faceLabel.setIcon(s.getPicture());
 
             // add random choices for this pic - one 1 is correct
-            String[] answers = itemData.getChoices(i, choices.length);
-            for (int j = 0; j < choices.length; j++) {
-                choices[j].setText(answers[j]);
+            Student[] answers = itemData.getChoices(s, choiceButtons.length);
+            for (int j = 0; j < choiceButtons.length; j++) {
+                // display the nameplate image showing the name of the student
+                choiceButtons[j].setIcon(answers[j].getNameplate());
             }
 
             // update score stats

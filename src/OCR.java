@@ -1,3 +1,5 @@
+/* OCR features diasbled for now
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,3 +35,5 @@ public class OCR {
         return lines;
     }
 }
+
+ */

@@ -1,3 +1,5 @@
+/* Item has now been replaced with Student
+
 import javax.swing.*;
 import java.util.HashMap;
 
@@ -101,3 +103,6 @@ public class Item {
         return difference;
     }
 }
+
+
+ */

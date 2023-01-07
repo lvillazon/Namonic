@@ -43,33 +43,55 @@ public class ResourceManager {
 
     public static BufferedImage getImageAt(Config settings, BufferedImage img, int row, int column) {
         // size, position and spacing of the pictures in the grid imported from SIMS
+        int scale = 1;
+        int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
+        int leftMargin = settings.getInt("GALLERY_LEFT_MARGIN");
+        int hSpacing = settings.getInt("GALLERY_H_SPACING");
+        int vSpacing = settings.getInt("GALLERY_V_SPACING");
+        int width = settings.getInt("GALLERY_IMAGE_WIDTH");
+        int nameHeight = settings.getInt("GALLERY_NAMEPLATE_HEIGHT");
+        int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
+
+        int y = topMargin + row * (height + vSpacing);
+        int x = leftMargin + column * (width * hSpacing);
+        BufferedImage subImage = img.getSubimage(x, y, width, height-nameHeight);
+        // scale it to a suitable size
+        Image scaled = subImage.getScaledInstance(
+                                        settings.getInt("DISPLAY_IMAGE_WIDTH")/scale,
+                                        settings.getInt("DISPLAY_IMAGE_HEIGHT")/scale,
+                                        Image.SCALE_SMOOTH);
+        return toBufferedImage(scaled);
+    }
+
+    public static BufferedImage getNameplateAt(Config settings, BufferedImage img, int row, int column) {
+        // size, position and spacing of the pictures in the grid imported from SIMS
         int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
         int bottomMargin = settings.getInt("GALLERY_BOTTOM_MARGIN");
         int leftMargin = settings.getInt("GALLERY_LEFT_MARGIN");
         int hSpacing = settings.getInt("GALLERY_H_SPACING");
         int vSpacing = settings.getInt("GALLERY_V_SPACING");
         int width = settings.getInt("GALLERY_IMAGE_WIDTH");
+        int nameHeight = settings.getInt("GALLERY_NAMEPLATE_HEIGHT");
         int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
 
-        int y = topMargin + row * (height + vSpacing);
+        int y = topMargin + row * (height + vSpacing) + height - nameHeight;
         int x = leftMargin + column * (width * hSpacing);
-        BufferedImage subImage = img.getSubimage(x, y, width, height);
+        BufferedImage subImage = img.getSubimage(x, y, width, nameHeight);
         // scale it to a suitable size
-        Image scaled = subImage.getScaledInstance(
-                                        settings.getInt("DISPLAY_IMAGE_WIDTH"),
-                                        settings.getInt("DISPLAY_IMAGE_HEIGHT"),
-                                        Image.SCALE_SMOOTH);
+        double scaledHeight = (double)settings.getInt("DISPLAY_IMAGE_HEIGHT") /
+                (double)settings.getInt("GALLERY_IMAGE_HEIGHT") *
+                settings.getInt(("GALLERY_NAMEPLATE_HEIGHT"));
         /*
-                                if (!isBlank(toBufferedImage(scaled))) {
-                                    images.add(new ImageIcon(scaled));
-                                    count++;
-                                }
-
-         */
+        Image scaled = subImage.getScaledInstance(
+                settings.getInt("DISPLAY_IMAGE_WIDTH"),
+                (int)scaledHeight,
+                Image.SCALE_SMOOTH);
+        */
+        Image scaled = subImage.getScaledInstance(200,50,Image.SCALE_SMOOTH);
         return toBufferedImage(scaled);
+
     }
-
-
+/*
     public static ArrayList<Item> loadItemData(Config settings) {
         ArrayList<String> rawData = FileHandler.readWholeFile(settings.getString("NAME_FILE"));
         ArrayList<Item> results = new ArrayList<>();
@@ -129,7 +151,7 @@ public class ResourceManager {
         System.out.println(count+" countries read");
         return results;
     }
-
+*/
     public static ArrayList<ImageIcon> loadImages(Config settings) {
         // size, position and spacing of the pictures in the grid imported from SIMS
         int topMargin = settings.getInt("GALLERY_TOP_MARGIN");
@@ -139,6 +161,7 @@ public class ResourceManager {
         int vSpacing = settings.getInt("GALLERY_V_SPACING");
         int width = settings.getInt("GALLERY_IMAGE_WIDTH");
         int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
+        int nameHeight = settings.getInt("GALLERY_NAMEPLATE_HEIGHT");
 
         ArrayList<ImageIcon> images = new ArrayList<>();
 
@@ -150,17 +173,20 @@ public class ResourceManager {
             for (String filename : galleryFiles) {
                 try {
                     BufferedImage[] galleryImages = FileHandler.readImages(filename);
+                    /* OCR disabled for now
                     String[] text = OCR.readTextFromImage(galleryImages[0]);
                     for(String s:text) {
                         System.out.println(s);
                     }
+
+                     */
                     int count = 0;
                     for (int page=0; page<galleryImages.length; page++) {
                         int y = topMargin;
                         while (y + height < galleryImages[page].getHeight() - bottomMargin) {
                             int x = leftMargin;
                             while (x + width < galleryImages[page].getWidth()) {
-                                ImageIcon icon = new ImageIcon(galleryImages[page].getSubimage(x, y, width, height));
+                                ImageIcon icon = new ImageIcon(galleryImages[page].getSubimage(x, y, width, height-100));
                                 // scale it to a suitable size
                                 Image scaled = icon.getImage().getScaledInstance(
                                         settings.getInt("DISPLAY_IMAGE_WIDTH"),

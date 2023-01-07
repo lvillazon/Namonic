@@ -7,8 +7,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class Memoriser {
-    private ArrayList<Item> allItems;
-    private ArrayList<Item> filteredItems;
+    //private ArrayList<Item> allItems; - replaced with allClasses
+    private ArrayList<Student> filteredItems;
     private ArrayList<TeachingClass> allClasses;
     private String[] metadataNames;  // titles of item metadata, eg "Gender", "PP"
     private ArrayList<String> categoryList;  // titles of item categories, eg "Year 7", "Year 8"
@@ -28,6 +28,7 @@ public class Memoriser {
 
     public Memoriser(Config settings) {
         this.settings = settings;
+        rng = new Random();
         // look for PDF files exported from SIMS for each class
         String[] galleryFiles = ResourceManager.getGalleryFiles(settings);
         if (galleryFiles.length == 0) {
@@ -44,7 +45,7 @@ public class Memoriser {
                 // assign each class to a separate category for now
                 categoryList.add(teach.getName());
                 categoryIncluded = new boolean[categoryList.size()];
-                for (int i=0; i<categoryIncluded.length; i++) {  // initialise with all cats selected
+                for (int i=0; i<categoryIncluded.length; i++) {  // initialise with all categoriess selected
                     categoryIncluded[i] = true;
                 }            }
             // show the main UI to play the memory game
@@ -105,9 +106,11 @@ public class Memoriser {
 
      */
 
-    public Item getItem(int i) {
+    /*public Item getItem(int i) {
         return allItems.get(i);
     }
+
+     */
 
     public int getTotalItems() {
         return filteredItems.size();
@@ -158,79 +161,66 @@ public class Memoriser {
 
     public void setCategoryIncluded(int i, boolean state) {
         categoryIncluded[i] = state;
-        filteredItems = getFilteredItems();
+        filteredItems = reloadFilteredItems();
     }
 
     // return a list of only those items that match current filters
-    private ArrayList<Item> getFilteredItems() {
-        ArrayList<Item> results = new ArrayList<>();
-        for (Item i: allItems) {
-            if (isCategoryIncluded(i.getCategory())) {
-                results.add(i);
+    private ArrayList<Student> reloadFilteredItems() {
+        ArrayList<Student> results = new ArrayList<>();
+        for (TeachingClass t: allClasses) {
+            if (isCategoryIncluded(t.getName())) {
+                for (int i=0; i<t.size(); i++) {
+                    results.add(t.getStudent(i));
+                }
             }
         }
         return results;
     }
 
     // return a list of possible answers, 1 of which is correct, the others are random
-    // names should also be chosen from the same category
-    // and optionally where the metadata also matches
-    public String[] getChoices(Item correct, int numberOfChoices) {
-        String[] results = new String[numberOfChoices];
+    // names should also be chosen from the currently selected categories
+    public Student[] getChoices(Student correct, int numberOfChoices) {
+        Student[] results = new Student[numberOfChoices];
         for (int i=0; i<numberOfChoices; i++) {
-            int j = rng.nextInt(getTotalItems());
+            int j = 0;
             // keep picking random items until it is not the same as the correct one
             // and isn't one we have already selected
-            // and is the same category as the correct answer
             boolean acceptable = false;
             while (!acceptable) {
-                j = rng.nextInt(allItems.size()-1);
-                if (allItems.get(j) != correct && allItems.get(j).getCategory().equals(correct.getCategory())) {
+                j = rng.nextInt(filteredItems.size()-1);
+                if (filteredItems.get(j) != correct) {
                     acceptable = true;  // at least so far...
                     // ... but check we haven't already picked it
-                    for (String alreadyPicked: results) {
-                        if (allItems.get(j).getName().equals(alreadyPicked)) {
+                    for (Student alreadyPicked: results) {
+                        if (filteredItems.get(j) == alreadyPicked) {
                             acceptable = false;
                         }
                     }
                 }
             }
-            results[i] = allItems.get(j).getName();
+            results[i] = filteredItems.get(j);
         }
         // overwrite one of the choice at random with the correct option
-        results[rng.nextInt(numberOfChoices)] = correct.getName();
+        results[rng.nextInt(numberOfChoices)] = correct;
         return results;
     }
 
     // pick an item at random from all the currently selected categories
-    public Item chooseRandomly() {
-        if (allItems.size() >0) {
-            // keep picking random items until it is one of the currently selected categories
-            boolean ok = false;
-            int i = -1;
-            while (!ok) {
-                i = rng.nextInt(allItems.size() - 1);
-                for (int j = 0; j < categoryList.size(); j++) {
-                    if (categoryIncluded[j] && allItems.get(i).getCategory().equals(categoryList.get(j))) {
-                        ok = true;
-                    }
-                }
-            }
-            System.out.println("choosing item " + i + " = " + allItems.get(i).getName());
-            return allItems.get(i);
-        } else {
-            return null;
-        }
+    public Student chooseRandomly() {
+        int i = rng.nextInt(filteredItems.size() - 1);
+        return filteredItems.get(i);
     }
 
     // return a random item from those that have the lowest scores in the currently selected categories
-    public Item chooseWorstRemembered() {
+    public Student chooseWorstRemembered() {
         // sort the currently selected items by score & return the bottom item
         // if we sort in descending order, then the last item is guaranteed to have the lowest score after 1 pass
-        // avoiding all the inefficiencies of normal bubble sorting
+        // avoiding all the inefficiencies of the multiple passes required for normal bubble sorting
+        // Also, by sorting the filteredItems list directly, rather than a temp list, we minimise the sorting required
+        // since the list will gradually become more and more sorted over multiple calls to the method.
         for (int i=0; i<filteredItems.size()-1; i++) {
             if (filteredItems.get(i).compareTo(filteredItems.get(i + 1)) < 0) {
-                Item temp = filteredItems.get(i);
+                Student temp = filteredItems.get(i);
                 filteredItems.set(i, filteredItems.get(i+1));
                 filteredItems.set(i+1, temp);
             }
@@ -242,28 +232,32 @@ public class Memoriser {
     public int getScore() {
         // add up correct answers for all items
         int total = 0;
-        for (Item i: allItems) {
-            total = total + i.getCorrectCount();
+        for (TeachingClass t: allClasses) {
+            for (int i=0; i<t.size(); i++) {
+                total = total + t.getStudent(i).getCorrectCount();
+            }
         }
         return total;
     }
 
     public int getAsked() {
-        // add up correct answers for all items
+        // add up number of times you have been asked to guess a student
         int total = 0;
-        for (Item i: allItems) {
-            total = total + i.getShowCount();
-        }
+            for (TeachingClass t: allClasses) {
+                for (int i = 0; i < t.size(); i++) {
+                    total = total + t.getStudent(i).getShowCount();
+                }
+            }
         return total;
     }
 
-    public void markCorrect(Item picked) {
+    public void markCorrect(Student picked) {
         picked.markCorrect();
         picked.markShown();
         streak++;
     }
 
-    public void markWrong(Item picked) {
+    public void markWrong(Student picked) {
         picked.markShown();
         streak = 0;
     }
@@ -272,50 +266,44 @@ public class Memoriser {
         return streak;
     }
 
-    // save scores for every item
+    // save stats for every class
     public void save() {
-        for (Item i: allItems) {
-            String scoreStats = i.getCorrectCount() + "/" + i.getShowCount();
-            settings.setString("[scores]", i.getFullName(), scoreStats);
+        for (TeachingClass t: allClasses) {
+            for (int i=0; i<t.size(); i++) {
+                Student s = t.getStudent(i);
+                String scoreStats = s.getCorrectCount() + "/" + s.getShowCount();
+                settings.setString("["+t.getName()+"]", s.getID(), scoreStats);
+            }
         }
         settings.save();
     }
 
     // restore the scores saved from the previous session in the config file
     private void loadScores() {
-        for (Item i: allItems) {
-            String statLine = settings.getString(i.getFullName());
-            if (!statLine.equals("")) {
-                String[] scoreStats = statLine.split("/");
-                if (scoreStats.length > 0) {
-                    try {
-                        i.setScore(Integer.parseInt(scoreStats[0]));
-                        i.setShown(Integer.parseInt(scoreStats[1]));
-                    } catch (NumberFormatException e) {
-                        ErrorHandler.ModalMessage("invalid score value " + scoreStats[0] + "/" + scoreStats[1] + " for " + i.getFullName());
+        for (TeachingClass t: allClasses) {
+            for (int i=0; i<t.size(); i++) {
+                Student s = t.getStudent(i);
+                // read the stats for this student, if they have been previously saved
+                if (settings.keyExists(t.getName(), s.getID())) {
+                    String statLine = settings.getStringFrom(t.getName(), s.getID());
+                    if (!statLine.equals("")) {
+                        String[] scoreStats = statLine.split("/");
+                        if (scoreStats.length > 0) {
+                            try {
+                                s.setScore(Integer.parseInt(scoreStats[0]));
+                                s.setShown(Integer.parseInt(scoreStats[1]));
+                            } catch (NumberFormatException e) {
+                                ErrorHandler.ModalMessage("invalid score value " +
+                                        scoreStats[0] + "/" + scoreStats[1] +
+                                        " for class " + t.getName() + " student " + s.getID());
+                            }
+                        }
+                    } else {
+                        s.setScore(0);
+                        s.setShown(0);
                     }
                 }
-            } else {
-                i.setScore(0);
-                i.setShown(0);
             }
-        }
-    }
-
-    // percentage correct over all sessions, rounded to int
-    public int getCategoryScore(String cat) {
-        int totalScore = 0;
-        int totalShown = 0;
-        for (int i=0; i<allItems.size(); i++) {
-            if (allItems.get(i).getCategory().equals(cat)) {
-                totalScore += allItems.get(i).getCorrectCount();
-                totalShown += allItems.get(i).getShowCount();
-            }
-        }
-        if (totalShown>0) {
-            return (int) ((double)totalScore / (double)totalShown * 100);
-        } else {
-            return 0;
         }
     }
 
