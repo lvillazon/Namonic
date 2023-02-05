@@ -170,6 +170,7 @@ public class ImportGUI extends JFrame implements ActionListener {
         southPanel.add(saveButton, BorderLayout.EAST);
 
         setSize(new Dimension(WIDTH, HEIGHT));
+        setVisible(true);
     }
 
     private void checkMatchingFiles() {
@@ -239,6 +240,7 @@ public class ImportGUI extends JFrame implements ActionListener {
             checkMatchingFiles();
         }
         if (e.getSource() == saveButton) {
+            double namePlateRatio = 0.1;  // proportion of the image that is the nameplate
             settings.setString("GALLERY_FOLDER", filepathField.getText());
             settings.setString("GALLERY_FILE_WILDCARD", wildcardField.getText());
             settings.setString("GALLERY_LEFT_MARGIN", Integer.toString(gallerySheet.getLeftMargin()));
@@ -246,6 +248,8 @@ public class ImportGUI extends JFrame implements ActionListener {
             settings.setString("GALLERY_BOTTOM_MARGIN", Integer.toString(gallerySheet.getBottomMargin()));
             settings.setString("GALLERY_IMAGE_WIDTH", Integer.toString(gallerySheet.getSinglePicWidth()));
             settings.setString("GALLERY_IMAGE_HEIGHT", Integer.toString(gallerySheet.getSinglePicHeight()));
+            int namePlateHeight = (int)(gallerySheet.getSinglePicHeight() * namePlateRatio);
+            settings.setString("GALLERY_NAMEPLATE_HEIGHT", Integer.toString(namePlateHeight));
             settings.setString("GALLERY_H_SPACING", Integer.toString(gallerySheet.getHSpacing()));
             settings.setString("GALLERY_V_SPACING", Integer.toString(gallerySheet.getVSpacing()));
             settings.save();

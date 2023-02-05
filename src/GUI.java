@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 
 public class GUI extends JFrame implements ActionListener {
 
@@ -15,19 +16,21 @@ public class GUI extends JFrame implements ActionListener {
     private final JButton[] choiceButtons;
     private final JLabel[] categoryScores;
     private final JCheckBox[] filters;
+    private final JButton configButton;
     private final JButton filterAllButton;
     private final JButton filterClearButton;
-    /*
-    private final JLabel nameLabel;
-    private final JLabel catLabel;
-    private final JLabel metadataLabel;
-    private final JLabel nameCount;
-    */
     private final Timer answerDelay;  // used for delays when showing correct/wrong & showing a new question
     private final Memoriser itemData;
     private final Config settings;
     private int itemIndex;
     private Student currentStudent;
+
+    private class CallBackHandler implements CallBack {
+        public void trigger() {
+            System.out.println("callback triggered");
+            finaliseData();
+        }
+    }
 
     public GUI(Config settings, Memoriser mem) {
         super("Namonic");
@@ -78,20 +81,10 @@ public class GUI extends JFrame implements ActionListener {
             choiceButtons[i].setPreferredSize(new Dimension(200,50));
             choiceButtons[i].setSize(new Dimension(150,40));
             choiceButtons[i].setAlignmentX(Component.CENTER_ALIGNMENT);
+            choiceButtons[i].setBackground(Color.WHITE);
             choiceButtons[i].addActionListener(this);
             choicePanel.add(choiceButtons[i]);
         }
-        // DEBUG name, category & metadata labels, just so I can check the file is read correctly
-        /*
-        nameLabel = new JLabel("name");
-        catLabel = new JLabel("category");
-        metadataLabel = new JLabel("tags");
-        nameCount = new JLabel("total names");
-        choicePanel.add(nameLabel);
-        choicePanel.add(catLabel);
-        choicePanel.add(metadataLabel);
-        choicePanel.add(nameCount);
-         */
         westPanel.add(choicePanel, BorderLayout.CENTER);
         answerDelay = new Timer(0, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -117,12 +110,15 @@ public class GUI extends JFrame implements ActionListener {
         correctLabel.setFont(correctLabel.getFont().deriveFont(72.0f));
         mainPanel.add(correctLabel, BorderLayout.CENTER);
 
-        // filters
+        // filters & config
         JPanel filterPanel = new JPanel();
         filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.PAGE_AXIS));
         JPanel filterButtonPanel = new JPanel();
         filterButtonPanel.setLayout(new BoxLayout(filterButtonPanel, BoxLayout.LINE_AXIS));
         filterButtonPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // needed so that the alignment of the checkboxes works properly
+        configButton = new JButton("Config");
+        configButton.addActionListener(this);
+        filterButtonPanel.add(configButton);
         filterAllButton = new JButton("All");
         filterAllButton.addActionListener(this);
         filterButtonPanel.add(filterAllButton);
@@ -163,6 +159,13 @@ public class GUI extends JFrame implements ActionListener {
         }
     }
 
+    private void finaliseData() {
+        System.out.println("data found...");
+        ArrayList<ImageIcon> data = ResourceManager.loadImages(settings);
+        System.out.println(data.size() + " images");
+        //memoryTestUI = new GUI(settings, this);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         System.out.println(e.getActionCommand());
@@ -190,6 +193,11 @@ public class GUI extends JFrame implements ActionListener {
                     filters[i].setSelected(false);
                     itemData.setCategoryIncluded(i, false);
                 }
+            }
+
+            // show config panel if Config button clicked
+            if (e.getSource() == configButton) {
+                new ImportGUI(settings, new CallBackHandler());
             }
 
             // check if we clicked a choice button

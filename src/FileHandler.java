@@ -33,7 +33,7 @@ public class FileHandler {
 
     public static BufferedImage[] readPDF(String filename) {
         PDDocument document = null;
-        int scale = 1; // TODO increase to 2 or more to improve text resolution
+        int scale = 2; // TODO increase to 2 or more to improve text resolution
         try {
             // load PDF
             File file = new File(filename);
