@@ -23,9 +23,9 @@ public class ImportGUI extends JFrame implements ActionListener {
     private final JLabel valueLabel;
     private final Config settings;
     private String[] fileMatches;
-    private CallBack finaliseFunction;
+    private Callback finaliseFunction;
 
-    public ImportGUI(Config settings, CallBack finalise) {
+    public ImportGUI(Config settings, Callback finalise) {
         super("Import Gallery Images");
         finaliseFunction = finalise;
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

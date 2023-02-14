@@ -20,12 +20,12 @@ public class GUI extends JFrame implements ActionListener {
     private final JButton filterAllButton;
     private final JButton filterClearButton;
     private final Timer answerDelay;  // used for delays when showing correct/wrong & showing a new question
-    private final Memoriser itemData;
+    private Memoriser itemData;
     private final Config settings;
     private int itemIndex;
     private Student currentStudent;
 
-    private class CallBackHandler implements CallBack {
+    private class CallbackHandler implements Callback {
         public void trigger() {
             System.out.println("callback triggered");
             finaliseData();
@@ -160,10 +160,8 @@ public class GUI extends JFrame implements ActionListener {
     }
 
     private void finaliseData() {
-        System.out.println("data found...");
-        ArrayList<ImageIcon> data = ResourceManager.loadImages(settings);
-        System.out.println(data.size() + " images");
-        //memoryTestUI = new GUI(settings, this);
+        settings.reload();
+        itemData.reload();
     }
 
     @Override
@@ -178,7 +176,6 @@ public class GUI extends JFrame implements ActionListener {
                 System.out.println("change filter "+i+" to " + filters[i].isSelected());
             }
         }
-        // DEBUG nameCount.setText(Integer.toString(itemData.getTotalItems()));
         if (!clickedFilter) {
 
             if (e.getActionCommand().equals("All")) {
@@ -197,7 +194,7 @@ public class GUI extends JFrame implements ActionListener {
 
             // show config panel if Config button clicked
             if (e.getSource() == configButton) {
-                new ImportGUI(settings, new CallBackHandler());
+                new ImportGUI(settings, new CallbackHandler());
             }
 
             // check if we clicked a choice button
@@ -243,7 +240,7 @@ public class GUI extends JFrame implements ActionListener {
         // update category scores
         for (int i=0; i<categoryScores.length; i++) {
             // TODO fix this
-//            categoryScores[i].setText(itemData.getCategoryScore(filters[i].getText()) + "%");
+            categoryScores[i].setText(itemData.getClassScore(filters[i].getText()) + "%");
         }
     }
 

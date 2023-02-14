@@ -53,7 +53,7 @@ public class ResourceManager {
         int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
 
         int y = topMargin + row * (height + vSpacing);
-        int x = leftMargin + column * (width * hSpacing);
+        int x = leftMargin + column * (width + hSpacing);
         // clip image if it extends beyond the gallery page
         if (x+width > img.getWidth()) {
             x = img.getWidth()-width;
@@ -78,7 +78,7 @@ public class ResourceManager {
         int height = settings.getInt("GALLERY_IMAGE_HEIGHT");
 
         int y = topMargin + row * (height + vSpacing) + height - nameHeight;
-        int x = leftMargin + column * (width * hSpacing);
+        int x = leftMargin + column * (width + hSpacing);
         // the offsets are to crop slightly, which removes any border artefacts
         BufferedImage subImage = img.getSubimage(x+2, y+1, width-4, nameHeight-2);
         return toBufferedImage(subImage);
@@ -124,10 +124,14 @@ public class ResourceManager {
                                         settings.getInt("DISPLAY_IMAGE_WIDTH"),
                                         settings.getInt("DISPLAY_IMAGE_HEIGHT"),
                                         Image.SCALE_SMOOTH);
-                                if (!isBlank(toBufferedImage(scaled))) {
+                                // DEBUG disabled the check for a blank image
+                                // testing this for by checking every pixel is too slow and generates
+                                // false negatives from edge effects, as well as false positives from
+                                // incorrect offsets in the config file
+                                //if (!isBlank(toBufferedImage(scaled))) {
                                     images.add(new ImageIcon(scaled));
                                     count++;
-                                }
+                                //}
                                 x = x + width + hSpacing;
                             }
                             y = y + height + vSpacing;

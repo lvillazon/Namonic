@@ -1,13 +1,8 @@
 import javax.swing.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 public class Memoriser {
-    //private ArrayList<Item> allItems; - replaced with allClasses
     private ArrayList<Student> filteredItems;
     private ArrayList<TeachingClass> allClasses;
     private String[] metadataNames;  // titles of item metadata, eg "Gender", "PP"
@@ -16,19 +11,16 @@ public class Memoriser {
     private Random rng;
     private int streak;
     private Config settings;
-    private ImportGUI studentDataImporter;
+   //private ImportGUI studentDataImporter;
     private GUI memoryTestUI;
-
-    private class CallBackHandler implements CallBack {
-        public void trigger() {
-            System.out.println("callback triggered");
-            finaliseData();
-        }
-    }
 
     public Memoriser(Config settings) {
         this.settings = settings;
         rng = new Random();
+        reload();
+    }
+
+    public void reload() {
         // look for PDF files exported from SIMS for each class
         String[] galleryFiles = ResourceManager.getGalleryFiles(settings);
         if (galleryFiles.length == 0) {
@@ -45,87 +37,22 @@ public class Memoriser {
                 // assign each class to a separate category for now
                 categoryList.add(teach.getName());
                 categoryIncluded = new boolean[categoryList.size()];
-                for (int i=0; i<categoryIncluded.length; i++) {  // initialise with all categoriess selected
+                for (int i=0; i<categoryIncluded.length; i++) {  // initialise with all categories selected
                     categoryIncluded[i] = true;
-                }            }
-            // show the main UI to play the memory game
-            memoryTestUI = new GUI(settings, this);
-        }
-    }
-
-    /*    LEFTOVER STUFF FROM THE OLD CONSTRUCTOR
-        allItems = ResourceManager.loadItemData(settings);
-        if (allItems.size() > 0) { // images & names were previously imported
-            // finalise any book-keeping
-            memoryTestUI = new GUI(settings, this);
-        } else {
-            // show the import dialog to allow the raw PDFs from SIMs to be imported
-            studentDataImporter = new ImportGUI(settings, new CallBackHandler());
-            studentDataImporter.setVisible(true);
-        }
-    }
-
-     */
-
-    private void finaliseData() {
-        System.out.println("data found...");
-        ArrayList<ImageIcon> data = ResourceManager.loadImages(settings);
-        System.out.println(data.size() + " images");
-        memoryTestUI = new GUI(settings, this);
-    }
-
-    /*
-    private void initialiseData(ArrayList<ImageIcon> itemImages) {
-        // take the chopped thumbnails and extracts the names & catego
-        metadataNames = settings.getString("ITEM_META").split(",");
-        categoryList = settings.getString("NAME_CATEGORIES").split(",");
-        categoryIncluded = new boolean[categoryList.length];
-        for (int i=0; i<categoryIncluded.length; i++) {  // initialise with all cats selected
-            categoryIncluded[i] = true;
-        }
-        // assign the pictures to the items - should be a 1:1 correspondence
-        if (allItems.size()==pictures.size()) {
-            int index = 0;
-            for (Item i: allItems) {
-                i.setPicture(pictures.get(index));
-                index++;
+                }
             }
-        } else {
-            ErrorHandler.ModalMessage("image count doesn't match name count:" + pictures.size() + " vs " + allItems.size());
+            loadScores();  // load scores from previous sessions for all classes
+            // show the main UI to play the memory game
+            if (memoryTestUI != null) {
+                memoryTestUI.dispose();  // get rid of previous window, if any
+            }
+            memoryTestUI = new GUI(settings, this);
         }
-        // remove items with name "BLANK" - these are just used to pad the name list so it matches the gallery grid
-        String blankName = settings.getString("PADDING_NAME");
-        Predicate<Item> blankItem = item -> item.getName().equals(blankName);
-        allItems.removeIf(blankItem);
-        System.out.println(allItems.size() + " items stored, after removing blanks");
-        loadScores();
-        filteredItems = getFilteredItems();
-        rng = new Random();  // used for all random choices
-        streak = 0;
     }
 
-     */
-
-    /*public Item getItem(int i) {
-        return allItems.get(i);
-    }
-
-     */
 
     public int getTotalItems() {
         return filteredItems.size();
-    }
-
-    public String getMetadataName(int i) {
-        if (i<metadataNames.length) {
-            return metadataNames[i];
-        } else {
-            return "";
-        }
-    }
-
-    public int getMetadataCount() {
-        return metadataNames.length;
     }
 
     public String getCategoryName(int i) {
@@ -249,6 +176,29 @@ public class Memoriser {
                 }
             }
         return total;
+    }
+
+    public int getClassScore(String className) {
+        // total the correct answers for the teaching class matching className
+        boolean found = false;
+        int i = 0;
+        TeachingClass correctClass = null;
+        // linear search for class
+        while (!found && i< allClasses.size()) {
+            if (allClasses.get(i).getName().equals(className)) {
+                found = true;
+                correctClass = allClasses.get(i);
+            } else {
+                i++;
+            }
+        }
+        int score = 0;
+        if (found) {
+            for (int j=0; j<correctClass.size(); j++) {
+                score += correctClass.getStudent(j).getCorrectCount();
+            }
+        }
+        return score;
     }
 
     public void markCorrect(Student picked) {

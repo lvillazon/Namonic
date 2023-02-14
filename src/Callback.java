@@ -1,3 +1,3 @@
-public interface CallBack {
+public interface Callback {
     public void trigger();
 }

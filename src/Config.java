@@ -10,6 +10,10 @@ public class Config {
 
     public Config(String configFilename) {
         this.filename = configFilename;
+        reload();
+    }
+
+    public void reload() {
         ArrayList<String> rawConfig = FileHandler.readWholeFile(filename);
         dictionaries = new LinkedHashMap<>();
         LinkedHashMap<String, String> sectionDict = null;
